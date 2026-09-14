@@ -63,13 +63,30 @@ export interface SimSettings {
 
 export type MessageState = 'sending' | 'delivered' | 'unacknowledged'
 
+/**
+ * Which conversation a message belongs to.
+ *
+ * `GROUP_THREAD` is the one thread everybody is in. Any other value is a mate
+ * id, and means a private thread between you and that mate — there are no
+ * private threads that do not include you, because this is your phone and it
+ * can only ever show what it has actually received.
+ */
+export const GROUP_THREAD = 'everyone'
+
+export type ThreadId = string
+
 export interface Message {
   id: string
+  threadId: ThreadId
   authorId: string
   text: string
   sentAt: number
   state: MessageState
   deliveredAt: number | null
+}
+
+export function isPrivateThread(threadId: ThreadId): boolean {
+  return threadId !== GROUP_THREAD
 }
 
 export interface ScenarioEvent {

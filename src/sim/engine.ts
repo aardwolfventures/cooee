@@ -10,9 +10,10 @@ import { metresBetween, bearingBetween, type LatLon } from '@/lib/geo'
 import { elevationAt } from './terrain'
 import { makeRng } from './rng'
 import { Track } from './track'
-import { planDelivery, type LinkConditions } from './transport'
+import { planDelivery, type DeliveryPlan, type LinkConditions } from './transport'
 import { CAMP, MATE_SEEDS, YOU_ID, routeToLatLon } from './mates'
-import type { Fix, Mate, Message, MessageState, SimSettings, Transport } from './types'
+import { GROUP_THREAD, isPrivateThread } from './types'
+import type { Fix, Mate, Message, MessageState, SimSettings, ThreadId, Transport } from './types'
 
 /** Sim clock origin. Rendered with UTC getters so it reads the same anywhere. */
 export const START_EPOCH_MS = Date.UTC(2026, 8, 14, 6, 40)
@@ -45,6 +46,18 @@ export const MESH_DEFAULTS: SimSettings = {
   transportOverrides: {},
   stalenessTreatment: 'label',
 }
+
+/**
+ * How often a mate takes you aside, unprompted.
+ *
+ * Deliberately rarer than group chatter: a private message that arrived every
+ * couple of minutes would train people to look for it, and what is being
+ * measured is whether an unexpected one gets noticed at all. The first is
+ * brought forward so it lands inside a test round rather than after it.
+ */
+export const PRIVATE_APPROACH_MIN_MS = 20 * 60_000
+export const PRIVATE_APPROACH_SPREAD_MS = 20 * 60_000
+export const FIRST_PRIVATE_APPROACH_MS = 5 * 60_000
 
 export const RELAY_HEARTBEAT_MS = 60_000
 
@@ -95,12 +108,19 @@ export class SimEngine {
    * thing would have to. That inference is what question 7 is testing.
    */
   lastRelayHeartbeatAt: number | null = null
+  /**
+   * A mate who is not in the party, because the person holding the phone is
+   * them. You cannot be a dot on your own map. Set before `reset`, which is
+   * what actually builds the party.
+   */
+  excludedMateId: string | null = null
 
   private pendingFixes: PendingFix[] = []
   private pendingMessages: PendingMessage[] = []
   private events: ScheduledEvent[] = []
   private lastScheduledArrival = new Map<string, number>()
   private nextReplyAt = 0
+  private nextPrivateAt = 0
   private nextRelayHeartbeatAt = 0
   private random = makeRng(20260914)
 
@@ -123,10 +143,11 @@ export class SimEngine {
     this.youAltitudeM = elevationAt(CAMP)
     this.youHeadingDeg = 42
     this.nextReplyAt = 150_000
+    this.nextPrivateAt = FIRST_PRIVATE_APPROACH_MS
     this.nextRelayHeartbeatAt = 0
     this.lastRelayHeartbeatAt = 0
 
-    this.mates = MATE_SEEDS.map((seed) => {
+    this.mates = MATE_SEEDS.filter((seed) => seed.id !== this.excludedMateId).map((seed) => {
       const track = TRACKS.get(seed.id)!
       const distance = track.totalM * seed.startFraction
       const pose = track.poseAt(distance)
@@ -369,9 +390,24 @@ export class SimEngine {
 
   // --- Messages ------------------------------------------------------------
 
-  send(text: string): Message {
+  /**
+   * Say something into a thread.
+   *
+   * The two thread kinds do not carry the same promise, and the model says so.
+   * A group message only has to reach the mesh: with six people on it somebody
+   * acknowledges, so one leg decides it. A private message has to reach one
+   * named person and come back, so it is planned over two legs — your link out
+   * and theirs back — and either one losing it leaves the message
+   * unacknowledged.
+   *
+   * That asymmetry is the point rather than a flourish. Taking a mate aside on
+   * a bad link is a much weaker promise than saying the same words to
+   * everyone, and question 8 is about how that weaker promise reads.
+   */
+  send(text: string, threadId: ThreadId = GROUP_THREAD): Message {
     const message: Message = {
       id: nextId('msg'),
+      threadId,
       authorId: YOU_ID,
       text,
       sentAt: this.now,
@@ -380,8 +416,12 @@ export class SimEngine {
     }
     this.messages.push(message)
 
-    const plan = planDelivery(this.youTransport, this.conditions, this.random)
-    if (plan.lost) {
+    const out = planDelivery(this.youTransport, this.conditions, this.random)
+    const back = isPrivateThread(threadId)
+      ? this.ackLeg(threadId)
+      : { lost: false, latencyMs: 0 }
+
+    if (out.lost || back.lost) {
       // No ack ever comes. The message sits unacknowledged, which is exactly
       // the state the brief wants people's reaction to.
       this.pendingMessages.push({
@@ -392,34 +432,63 @@ export class SimEngine {
     } else {
       this.pendingMessages.push({
         messageId: message.id,
-        deliverAt: this.now + plan.latencyMs,
+        deliverAt: this.now + out.latencyMs + back.latencyMs,
         outcome: 'delivered',
       })
+    }
+
+    // They only answer what actually got to them. A message lost on the way
+    // out is answered by silence, and nothing on this phone can tell that
+    // apart from being ignored.
+    if (isPrivateThread(threadId) && !out.lost) {
+      this.schedulePrivateReply(threadId, out.latencyMs)
     }
     return message
   }
 
-  private maybeReply(): void {
-    this.resolveMessages()
-    if (this.now < this.nextReplyAt) {
-      return
+  /** The return leg of a private message: that one named phone acking. */
+  private ackLeg(mateId: string): DeliveryPlan {
+    const mate = this.mate(mateId)
+    if (mate === undefined || mate.activity === 'silent') {
+      return { lost: true, latencyMs: 0 }
     }
-    this.nextReplyAt = this.now + 120_000 + this.random() * 180_000
+    return planDelivery(mate.transport, this.conditions, this.random)
+  }
 
-    const speakers = this.mates.filter((m) => m.activity !== 'silent')
-    if (speakers.length === 0) {
+  private schedulePrivateReply(mateId: string, arrivalMs: number): void {
+    const mate = this.mate(mateId)
+    if (mate === undefined || mate.activity === 'silent') {
       return
     }
-    const speaker = speakers[Math.floor(this.random() * speakers.length)]!
+    // Nobody answers the instant it lands. They are walking, and the phone is
+    // in a pocket under a jacket.
+    const think = 20_000 + this.random() * 100_000
+    this.schedule(this.now + arrivalMs + think, () => {
+      this.speak(mateId, mateId, PRIVATE_REPLIES)
+    })
+  }
+
+  /**
+   * A mate says something and it degrades over the same link model as
+   * everything else. Group chatter, private approaches and private replies all
+   * come through here rather than as three near-copies that drift apart.
+   */
+  private speak(speakerId: string, threadId: ThreadId, corpus: readonly string[]): void {
+    const speaker = this.mate(speakerId)
+    if (speaker === undefined || speaker.activity === 'silent') {
+      return
+    }
     const plan = planDelivery(speaker.transport, this.conditions, this.random)
     if (plan.lost) {
+      // They said it. It never got here — and this phone cannot tell that
+      // apart from them never having said anything.
       return
     }
-    const text = MATE_REPLIES[Math.floor(this.random() * MATE_REPLIES.length)]!
     const message: Message = {
       id: nextId('msg'),
+      threadId,
       authorId: speaker.id,
-      text,
+      text: corpus[Math.floor(this.random() * corpus.length)]!,
       sentAt: this.now,
       state: 'sending',
       deliveredAt: null,
@@ -430,6 +499,49 @@ export class SimEngine {
       deliverAt: this.now + plan.latencyMs,
       outcome: 'delivered',
     })
+  }
+
+  private maybeReply(): void {
+    this.resolveMessages()
+    this.maybeGroupChatter()
+    this.maybePrivateApproach()
+  }
+
+  private maybeGroupChatter(): void {
+    if (this.now < this.nextReplyAt) {
+      return
+    }
+    this.nextReplyAt = this.now + 120_000 + this.random() * 180_000
+
+    const speakers = this.mates.filter((m) => m.activity !== 'silent')
+    if (speakers.length === 0) {
+      return
+    }
+    const speaker = speakers[Math.floor(this.random() * speakers.length)]!
+    this.speak(speaker.id, GROUP_THREAD, MATE_REPLIES)
+  }
+
+  /**
+   * Somebody takes you aside, unprompted, on a far longer cycle than group
+   * chatter.
+   *
+   * With the messages tab gone there is no bar left to badge, so the only cue
+   * that this arrived is a count on that mate's dot. Whether anyone sees it is
+   * the question the whole arrangement exists to ask.
+   */
+  private maybePrivateApproach(): void {
+    if (this.now < this.nextPrivateAt) {
+      return
+    }
+    this.nextPrivateAt =
+      this.now + PRIVATE_APPROACH_MIN_MS + this.random() * PRIVATE_APPROACH_SPREAD_MS
+
+    const speakers = this.mates.filter((m) => m.activity !== 'silent')
+    if (speakers.length === 0) {
+      return
+    }
+    const speaker = speakers[Math.floor(this.random() * speakers.length)]!
+    this.speak(speaker.id, speaker.id, PRIVATE_OPENERS)
   }
 
   private resolveMessages(): void {
@@ -522,6 +634,9 @@ export class SimEngine {
   }
 }
 
+/**
+ * What gets said to everyone. Short, because it was thumbed one-handed.
+ */
 export const MATE_REPLIES = [
   'on the ridge',
   'heading back',
@@ -530,4 +645,29 @@ export const MATE_REPLIES = [
   'at the truck',
   'hold fire',
   'sitting tight for a bit',
+] as const
+
+/**
+ * What somebody says when they want you specifically, not the group. These are
+ * deliberately things that would be rude or pointless broadcast to six people
+ * — if a private thread carried the same words as the group one, it would not
+ * be earning its place.
+ */
+export const PRIVATE_OPENERS = [
+  'you right for a hand?',
+  'can you swing round the spur?',
+  'where are you exactly',
+  'seen anything your side?',
+  'stay there, coming to you',
+  'you got the truck keys?',
+] as const
+
+/** And what they say back when you started it. */
+export const PRIVATE_REPLIES = [
+  'yep',
+  'on my way',
+  'give me ten',
+  'cant right now',
+  'where are you',
+  'righto',
 ] as const

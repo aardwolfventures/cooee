@@ -29,18 +29,49 @@ minutes after you make it.
 
 ## What it is
 
-Portrait phone first. Three screens and a status strip, and deliberately
-nothing else:
+Portrait phone first. One screen and a status strip, with everything else
+reached from them:
 
 - **Map** — mates as dots over the real Vulcan sheet, your position, the relay.
+  This is the app; there is no tab bar.
 - **Mate detail** — tap a dot. Distance, bearing, elevation, age of the fix in
   words, terrain cross-section, slope-adjusted walk time.
-- **Messages** — one group thread, six presets, per-message delivery state.
+- **Threads** — **Message everyone** at the bottom of the map opens the group
+  thread; **Message <name>** on a mate's detail sheet opens a private one with
+  just them. Six presets either way, and per-message delivery state.
 - **Status strip** — always on screen. Reachable count, relay health, and how
   long since anything was heard at all. A safety element, not a settings one:
   it answers "should I trust what I am looking at".
 
 Tap **☰** in the status strip for the simulation controls.
+
+### Who you are
+
+The app asks your name on first load, because the way this gets tested is by
+sending one URL to the whole party. Whoever opens it is the person holding the
+phone, and their name goes on their own dot.
+
+If the name is somebody already in the party, they leave it — you cannot be a
+dot on your own map, and a Ben who can see Ben out on the ridge is being shown
+something false on the first screen he ever sees. The scenarios pick their
+roles accordingly, so "gone quiet" always has somebody to go quiet.
+
+### Group and private
+
+Two threads, and they do not carry the same promise.
+
+A group message only has to reach the mesh: with six people on it somebody
+acknowledges. A private message has to reach one named person and come back, so
+it is modelled over two legs — your link out and theirs back — and either leg
+losing it leaves the message unacknowledged. Taking a mate aside on a bad link
+is a much weaker promise than saying the same words to everyone, and the model
+says so rather than pretending otherwise.
+
+Private messages never appear in the bubble over a dot. A bubble hangs on the
+map in plain view, and a thread someone opened with you alone should not be
+readable over your shoulder. They announce themselves with a count on that
+mate's dot instead — and with no tab bar left to badge, whether that count gets
+noticed is the thing this arrangement is being tested for.
 
 ## The simulation
 
@@ -160,8 +191,11 @@ The map and the ground under it are not simulated.
 
 ## Known limitations
 
-- **Nothing persists.** Reload and the simulation restarts. That is intended:
-  the brief says v1 persists nothing that matters.
+- **Nothing persists** except your name. Reload and the simulation restarts,
+  which is intended — the brief says v1 persists nothing that matters. The name
+  is the one exception: being asked who you are on every refresh is not a
+  finding, it is an irritation, and an irritated tester stops testing. Change
+  it under **You** in the ☰ panel.
 - **The single-file build has no sheet.** `pnpm build:standalone` inlines the
   elevation model but not 791 map tiles, so it shows shaded relief and contours
   without the printed map over the top.

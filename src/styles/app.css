@@ -21,7 +21,6 @@
 
   --tap: 48px;
   --strip-h: 56px;
-  --tabs-h: 60px;
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -132,6 +131,32 @@ button {
 .mate-marker__dot--two {
   font-size: 11px;
   letter-spacing: -0.02em;
+}
+
+/*
+ * Private messages waiting from this mate.
+ *
+ * Pinned to the dot's top-right so it reads as belonging to the person rather
+ * than floating near them, and given the same white keyline as the dot so it
+ * survives being over a pale part of the sheet. Amber, not red: somebody
+ * wanting a word is not an alarm, and red belongs to the staleness ramp.
+ */
+.mate-marker__unread {
+  position: absolute;
+  top: -9px;
+  right: -11px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--recent);
+  border: 2px solid #12160f;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.75);
+  color: #12160f;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
 }
 
 .mate-marker__label {
