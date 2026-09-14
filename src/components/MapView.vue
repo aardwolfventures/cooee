@@ -291,7 +291,17 @@ watch(
 <template>
   <div class="map">
     <div ref="host" class="map__canvas" />
-    <button class="map__fit" type="button" @click="fitEveryone">Fit all</button>
+    <!--
+      Four corner brackets: the "fit this into the frame" convention. A
+      crosshair or a target would read as "centre on me", which is a different
+      action and one the map does not have. The accessible name stays the
+      words, because an icon has none.
+    -->
+    <button class="map__fit" type="button" aria-label="Fit all" title="Fit all" @click="fitEveryone">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+      </svg>
+    </button>
 
     <!--
       The group thread lives here rather than behind a tab. Saying something to
@@ -322,12 +332,29 @@ watch(
   right: 12px;
   bottom: calc(80px + var(--safe-bottom));
   z-index: 500;
-  min-height: var(--tap);
-  padding: 0 16px;
+  display: grid;
+  place-items: center;
+  /* Square, and still a full tap target — the label went, the thumb did not. */
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
   border-radius: 10px;
   background: rgba(10, 13, 8, 0.9);
   border: 2px solid var(--line);
-  font-weight: 700;
+}
+
+.map__fit svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map__fit:active svg {
+  stroke: var(--fresh);
 }
 
 .map__shout {
