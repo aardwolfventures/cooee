@@ -32,7 +32,7 @@ function openMessages(): void {
     <div class="sheet__panel">
       <header class="sheet__head">
         <span class="sheet__swatch" :style="{ background: view.mate.colour }" />
-        <h2 class="sheet__name">{{ view.mate.name }}</h2>
+        <h2 class="sheet__name">{{ view.mate.fullName }}</h2>
         <button class="sheet__close" type="button" @click="close">Close</button>
       </header>
 

@@ -1,6 +1,9 @@
 /**
- * The party: Mike behind the phone, with Ben, Marshy, Rod, Derrick, Sahil and
- * Dan out in front.
+ * The party: Mike Hill behind the phone, with Ben Lake, Paul "Marshy" Marsh,
+ * Rod Miller, Derrick Cruz, Sahil Prasad and Dan Galea out in front.
+ *
+ * `name` is what everyone actually gets called and is what the map shows;
+ * `fullName` is for the detail screen, where there is room for it.
  *
  * Real names, deliberately. A dot labelled "Mate 2" is not the same test as a
  * dot labelled with someone you know, because the thing being measured is
@@ -21,7 +24,10 @@ import type { LatLon } from '@/lib/geo'
  */
 export interface MateSeed {
   id: string
+  /** First name or nickname. What goes on the map, where space is scarce. */
   name: string
+  /** Full name, for the detail screen where there is room for it. */
+  fullName: string
   /**
    * The letter(s) on the dot. Explicit rather than derived: Derrick Cruz and
    * Dan Galea share a first initial, so they take first-and-surname initials
@@ -42,6 +48,7 @@ export interface MateSeed {
 
 export const YOU_ID = 'you'
 export const YOU_NAME = 'Mike'
+export const YOU_FULL_NAME = 'Mike Hill'
 
 /** Camp, and where your own position starts. */
 export const CAMP: LatLon = fromLocalKm({ east: 0, north: 0 })
@@ -50,6 +57,7 @@ export const MATE_SEEDS: MateSeed[] = [
   {
     id: 'ben',
     name: 'Ben',
+    fullName: 'Ben Lake',
     tag: 'B',
     colour: '#7ab8ff',
     // Up the river west, then climbing the spur onto the northern tops.
@@ -68,6 +76,7 @@ export const MATE_SEEDS: MateSeed[] = [
   {
     id: 'marshy',
     name: 'Marshy',
+    fullName: 'Paul Marsh',
     tag: 'M',
     colour: '#c58cff',
     // South-east, climbing hard onto the high ridge and sidling along it.
@@ -86,6 +95,7 @@ export const MATE_SEEDS: MateSeed[] = [
   {
     id: 'rod',
     name: 'Rod',
+    fullName: 'Rod Miller',
     tag: 'R',
     colour: '#ff8fb1',
     // Stays low, east along the river flats, glassing the far faces.
@@ -103,6 +113,7 @@ export const MATE_SEEDS: MateSeed[] = [
   {
     id: 'derrick',
     name: 'Derrick',
+    fullName: 'Derrick Cruz',
     tag: 'DC',
     colour: '#4dd0e1',
     // North-east through the timber, working the heads of the gullies.
@@ -121,6 +132,7 @@ export const MATE_SEEDS: MateSeed[] = [
   {
     id: 'sahil',
     name: 'Sahil',
+    fullName: 'Sahil Prasad',
     tag: 'S',
     colour: '#b0bec5',
     // South-west, down-valley then up onto the shaded southern faces.
@@ -138,6 +150,7 @@ export const MATE_SEEDS: MateSeed[] = [
   {
     id: 'dan',
     name: 'Dan',
+    fullName: 'Dan Galea',
     tag: 'DG',
     colour: '#8a92e8',
     // Due north up the side creek to the saddle, then sitting on it.

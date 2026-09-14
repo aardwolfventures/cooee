@@ -30,6 +30,7 @@ export interface Fix {
 export interface Mate {
   id: string
   name: string
+  fullName: string
   tag: string
   colour: string
   /** Ground truth. The UI must never read this — only delivered fixes. */

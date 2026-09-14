@@ -9,7 +9,8 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:standalone": "vite build --base ./ && node scripts/standalone.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

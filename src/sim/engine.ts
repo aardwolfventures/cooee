@@ -121,6 +121,7 @@ export class SimEngine {
       return {
         id: seed.id,
         name: seed.name,
+        fullName: seed.fullName,
         tag: seed.tag,
         colour: seed.colour,
         truePosition: pose.position,
