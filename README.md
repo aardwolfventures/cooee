@@ -124,9 +124,15 @@ It proves nothing about radio range, mesh behaviour or battery life. Those are
 field questions and no prototype can answer them. If a question can only be
 answered by standing in a gully, it is out of scope here.
 
-It also has no waypoints, no tracks, no layers panel, no mate list and no
-bearing arrow. The last two are absent on purpose: questions 4 and 5 are
-answered by whether anyone asks for them.
+It also has no waypoints, no tracks and no layers panel. It has no mate list
+either, which is still deliberate: question 4 is answered by whether anyone
+asks for one.
+
+Direction cues were in that same category and are no longer, because someone
+asked. See question 5 in [`docs/questions.md`](docs/questions.md) — the map now
+shows which way each mate was walking when their fix was taken, and which way
+you are facing. Both are on the map rather than in a "point this way" arrow on
+the detail screen, which is the distinction the build plan draws.
 
 ## What is real
 

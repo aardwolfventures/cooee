@@ -165,6 +165,98 @@ button {
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
 }
 
+/*
+ * Which way you are pointed. A cone, not a needle: it widens away from you,
+ * which is the honest shape for a heading nobody knows to the degree. Rotation
+ * is applied inline, so the wedge must be drawn pointing north at rest.
+ */
+.you-marker__cone {
+  position: absolute;
+  width: 0;
+  height: 0;
+  /* Apex at the dot, widening away from it: the further out, the less sure
+     you are of the bearing, which is the shape of the actual uncertainty. */
+  margin-left: -30px;
+  margin-top: -62px;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-top: 62px solid rgba(42, 132, 246, 0.92);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, #000 25%, rgba(0, 0, 0, 0.55) 72%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 25%, rgba(0, 0, 0, 0.55) 72%, transparent 100%);
+  /* The sheet underneath is pale and busy; without an outline the cone
+     dissolves into it. */
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+/*
+ * A mate's direction of travel at the moment their fix was taken. Deliberately
+ * smaller and quieter than your own cone — it is older information, and it
+ * should not compete with the dot it belongs to.
+ */
+.mate-marker__course {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin-left: -7px;
+  margin-top: -31px;
+  transform-origin: 7px 31px;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 11px solid rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
+  pointer-events: none;
+}
+
+/*
+ * The last thing someone said, over their dot. Sits above the name label and
+ * is capped in width so a long message cannot wall off the map behind it.
+ */
+.mate-marker__bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  max-width: 168px;
+  width: max-content;
+  padding: 5px 9px;
+  border-radius: 11px;
+  background: #f4f6f5;
+  color: #11170f;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+/* The tail, so the bubble reads as belonging to the dot under it. */
+.mate-marker__bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #f4f6f5;
+}
+
+/* Not yet acknowledged. Under 20% loss this is frequent and it should read. */
+.mate-marker__bubble--unacked {
+  background: #e7dcc2;
+  color: #2a2410;
+}
+
+.mate-marker__bubble--unacked::after {
+  border-top-color: #e7dcc2;
+}
+
 .relay-marker__box {
   position: absolute;
   transform: translate(-50%, -50%);

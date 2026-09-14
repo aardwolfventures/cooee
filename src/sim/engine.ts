@@ -71,6 +71,17 @@ export class SimEngine {
   now = 0
   mates: Mate[] = []
   youPosition: LatLon = { ...CAMP }
+  /**
+   * Which way you are facing, in degrees from north.
+   *
+   * Simulated, like everything else here. On a real phone this would come off
+   * the magnetometer; the build plan is clear that it has to, because course
+   * over ground says nothing while you are standing still. For a prototype
+   * whose job is to find out whether a facing cone helps at all, a plausible
+   * heading tests the interaction exactly as well as a real one — the same
+   * argument the brief makes for faking the terrain profile.
+   */
+  youHeadingDeg = 42
   youAltitudeM = elevationAt(CAMP)
   youTransport: Transport = 'mesh'
   settings: SimSettings = { ...MESH_DEFAULTS, transportOverrides: {} }
@@ -110,6 +121,7 @@ export class SimEngine {
     this.random = makeRng(20260914)
     this.youPosition = { ...CAMP }
     this.youAltitudeM = elevationAt(CAMP)
+    this.youHeadingDeg = 42
     this.nextReplyAt = 150_000
     this.nextRelayHeartbeatAt = 0
     this.lastRelayHeartbeatAt = 0
@@ -180,6 +192,7 @@ export class SimEngine {
       this.runEvents()
       this.advanceMates(step)
       this.advanceYou(step)
+      this.swayHeading(step)
       this.emitReports()
       this.emitRelayHeartbeat()
       this.deliver()
@@ -234,6 +247,18 @@ export class SimEngine {
     }
   }
 
+  /**
+   * Standing still, you still turn: glassing a face, checking a spur, looking
+   * back at camp. A cone frozen dead still would read as a broken instrument
+   * rather than a compass, so it drifts gently when you are not walking.
+   */
+  private swayHeading(stepMs: number): void {
+    if (this.convergeTargetId !== null) {
+      return
+    }
+    this.youHeadingDeg = (this.youHeadingDeg + 0.9 * Math.sin(this.now / 9_000) * (stepMs / 1000) + 360) % 360
+  }
+
   /** Scenario 5: you walk toward the mate you selected. */
   private advanceYou(stepMs: number): void {
     if (this.convergeTargetId === null) {
@@ -250,10 +275,13 @@ export class SimEngine {
     }
     const stepM = 1.25 * (stepMs / 1000)
     const t = Math.min(1, stepM / remaining)
-    this.youPosition = {
+    const next = {
       lat: this.youPosition.lat + (aim.lat - this.youPosition.lat) * t,
       lon: this.youPosition.lon + (aim.lon - this.youPosition.lon) * t,
     }
+    // Walking, so you are facing where you are going.
+    this.youHeadingDeg = bearingBetween(this.youPosition, next)
+    this.youPosition = next
     this.youAltitudeM = elevationAt(this.youPosition)
   }
 

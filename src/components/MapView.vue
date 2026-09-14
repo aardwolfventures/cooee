@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { useSimStore } from '@/stores/sim'
-import { RELAY, YOU_NAME } from '@/sim/mates'
+import { RELAY, YOU_ID, YOU_NAME } from '@/sim/mates'
 import { createTerrainLayer } from '@/map/terrainLayer'
 import { ageShort, fadeOpacity, haloDiameterPx } from '@/lib/staleness'
 import type { MateView } from '@/stores/sim'
@@ -30,6 +30,33 @@ function escapeHtml(value: string): string {
  * position and label all stay put — otherwise the comparison measures layout
  * churn instead of legibility.
  */
+/**
+ * The bubble over someone's dot. Truncated hard: this is a glance, and the
+ * whole thread is one tab away.
+ */
+function bubbleHtml(authorId: string): string {
+  const message = sim.bubbleByAuthor.get(authorId)
+  if (message === undefined) {
+    return ''
+  }
+  const text = message.text.length > 42 ? `${message.text.slice(0, 41)}…` : message.text
+  const pending = message.state === 'unacknowledged' ? ' mate-marker__bubble--unacked' : ''
+  return `<span class="mate-marker__bubble${pending}">${escapeHtml(text)}</span>`
+}
+
+/**
+ * The little arrow showing which way someone was walking.
+ *
+ * Drawn from the delivered fix, so it ages out with the dot rather than
+ * quietly staying current — see `courseDeg` in the store for why that matters.
+ */
+function courseHtml(courseDeg: number | null): string {
+  if (courseDeg === null) {
+    return ''
+  }
+  return `<span class="mate-marker__course" style="transform:rotate(${courseDeg.toFixed(0)}deg)"></span>`
+}
+
 function mateMarkerHtml(view: MateView): string {
   const { mate, ageMs, bucket } = view
   const treatment = sim.engine.settings.stalenessTreatment
@@ -49,7 +76,9 @@ function mateMarkerHtml(view: MateView): string {
 
   return `
     <div class="mate-marker" style="opacity:${dotOpacity.toFixed(2)}">
+      ${bubbleHtml(mate.id)}
       ${halo}
+      ${courseHtml(view.courseDeg)}
       <span class="mate-marker__dot${mate.tag.length > 1 ? ' mate-marker__dot--two' : ''}" style="background:${mate.colour}">${tag}</span>
       <span class="mate-marker__label">${name}${ageLabel}</span>
     </div>
@@ -67,7 +96,10 @@ function relayMarkerHtml(): string {
 }
 
 function youMarkerHtml(): string {
-  return `<div class="mate-marker"><span class="you-marker__dot"></span><span class="mate-marker__label">${escapeHtml(YOU_NAME)}</span></div>`
+  // A cone rather than an arrow: you know roughly which way you are pointed,
+  // not precisely, and a hard needle would claim a precision no compass has.
+  const cone = `<span class="you-marker__cone" style="transform:rotate(${sim.engine.youHeadingDeg.toFixed(0)}deg)"></span>`
+  return `<div class="mate-marker">${bubbleHtml(YOU_ID)}${cone}<span class="you-marker__dot"></span><span class="mate-marker__label">${escapeHtml(YOU_NAME)}</span></div>`
 }
 
 function icon(html: string): L.DivIcon {
@@ -103,6 +135,7 @@ function render(): void {
     youMarker.addTo(map)
   } else {
     youMarker.setLatLng(you)
+    youMarker.setIcon(icon(youMarkerHtml()))
   }
 
   const relay = L.latLng(RELAY.position.lat, RELAY.position.lon)

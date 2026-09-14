@@ -48,7 +48,30 @@ Observed:
 
 ### 5. When walking toward someone, do they use the map or immediately want an arrow?
 
-There is deliberately no arrow either.
+**Asked for, unprompted, before the first test round.** The request was for
+three things at once: which way each mate is moving, which way you are facing,
+and the last message over the sender's dot. Nobody had to be walking toward
+anyone for it to come up — looking at a map of dots was enough.
+
+That is an answer to the first half of the question, and it arrived early. The
+second half is still open: whether the cue people wanted is a north-up
+relationship on the map (what was built) or a "point this way" arrow on the
+detail screen (what the build plan warns needs a magnetometer to be honest).
+
+Built in response:
+
+- Each mate's dot carries a small arrow showing their course **at the moment
+  their fix was taken**. It is drawn from the delivered fix, never from ground
+  truth, and it disappears once the fix passes ten minutes — an arrow reads as
+  present tense, so a stale one claims more than a stale dot does.
+- Your own dot carries a facing cone. It is simulated, not a real compass.
+
+Still to watch:
+
+- Does the course arrow get read as "where they are heading now"? That is the
+  failure mode, and the ten-minute cut-off is a guess at preventing it.
+- Does anyone notice the arrows vanishing, or just stop trusting them?
+- Does the facing cone get used, or is north-up enough?
 
 Observed:
 

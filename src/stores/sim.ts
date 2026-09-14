@@ -2,10 +2,10 @@ import { computed, reactive, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 import { SimEngine, RELAY_DOWN_MS, RELAY_SUSPECT_MS } from '@/sim/engine'
 import { SCENARIOS, scenarioById, type ScenarioId } from '@/sim/scenarios'
-import { bucketFor, type StalenessBucket } from '@/lib/staleness'
+import { STALENESS_THRESHOLDS_MS, bucketFor, type StalenessBucket } from '@/lib/staleness'
 import { estimateWalk, type WalkEstimate } from '@/lib/walk'
 import { compassPoint } from '@/lib/geo'
-import type { Mate, StalenessTreatment, Transport } from '@/sim/types'
+import type { Mate, Message, StalenessTreatment, Transport } from '@/sim/types'
 
 export type ClockSpeed = 1 | 10 | 60 | 300
 export type RelayHealth = 'up' | 'suspect' | 'down'
@@ -17,11 +17,41 @@ export interface MateView {
   ageMs: number | null
   bucket: StalenessBucket
   distanceM: number | null
+  /** Direction from you to them. */
   bearingDeg: number | null
   compass: string
+  /**
+   * The direction they were travelling when the fix was taken — their course,
+   * not a bearing to them, and not their heading now. Null when they were not
+   * moving, or when the fix is too old for it to mean anything.
+   */
+  courseDeg: number | null
   transport: Transport
   batteryPct: number
 }
+
+/**
+ * How long a message stays in a bubble over its sender's dot.
+ *
+ * Long enough to catch on a glance, short enough that six mates do not bury
+ * the map in speech. Like the staleness thresholds, this is a guess meant to
+ * be argued with after a test round.
+ */
+export const MESSAGE_BUBBLE_MS = 5 * 60_000
+
+/**
+ * Below this, "moving" is GPS noise rather than a person walking, and a course
+ * arrow drawn from it would spin at random.
+ */
+const MOVING_MPS = 0.3
+
+/**
+ * A course arrow is dropped once the fix passes this age. A stale dot is
+ * already a problem; a stale arrow is a worse one, because an arrow is
+ * inherently present tense — it says "they are heading that way" about
+ * information that may be twenty minutes old.
+ */
+const COURSE_MAX_AGE_MS = STALENESS_THRESHOLDS_MS.recent
 
 export const useSimStore = defineStore('sim', () => {
   const engine = reactive(new SimEngine()) as SimEngine
@@ -116,6 +146,11 @@ export const useSimStore = defineStore('sim', () => {
       const ageMs = fix === null ? null : Math.max(0, engine.now - fix.capturedAt)
       const distanceM = engine.distanceTo(mate)
       const bearingDeg = engine.bearingTo(mate)
+      // Straight off the delivered fix. Never `mate.trueHeadingDeg`: that is
+      // ground truth, and reading it would make the arrow current even when
+      // the dot under it is not.
+      const moving = fix !== null && fix.speedMps > MOVING_MPS
+      const courseFresh = ageMs !== null && ageMs <= COURSE_MAX_AGE_MS
       return {
         mate,
         ageMs,
@@ -123,10 +158,28 @@ export const useSimStore = defineStore('sim', () => {
         distanceM,
         bearingDeg,
         compass: bearingDeg === null ? '—' : compassPoint(bearingDeg),
+        courseDeg: fix !== null && moving && courseFresh ? fix.headingDeg : null,
         transport: mate.transport,
         batteryPct: fix?.nodeBatteryPct ?? Math.round(mate.nodeBatteryPct),
       }
     })
+  })
+
+  /**
+   * The latest thing each person said, while it is still recent enough to sit
+   * over their dot. Keyed by author, so six mates give at most six bubbles.
+   */
+  const bubbleByAuthor = computed<Map<string, Message>>(() => {
+    void frame.value
+    const out = new Map<string, Message>()
+    for (const message of engine.messages) {
+      if (engine.now - message.sentAt > MESSAGE_BUBBLE_MS) {
+        continue
+      }
+      // messages are pushed in order, so the last one seen per author wins
+      out.set(message.authorId, message)
+    }
+    return out
   })
 
   const selectedMate = computed<MateView | null>(() => {
@@ -220,6 +273,7 @@ export const useSimStore = defineStore('sim', () => {
     selectedMate,
     selectedWalk,
     mateViews,
+    bubbleByAuthor,
     relayHealth,
     relayHeartbeatAgeMs,
     reachableCount,
