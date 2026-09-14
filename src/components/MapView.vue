@@ -194,7 +194,10 @@ onMounted(() => {
     minZoom: 9,
     maxZoom: 17,
     minNativeZoom: 11,
-    maxNativeZoom: 14,
+    // Hosts with a file-count cap get a trimmed tile set; the deploy that has
+    // room carries z14. Leaflet over-zooms whatever the top native level is,
+    // so the map stays usable either way.
+    maxNativeZoom: Number(import.meta.env.VITE_MAX_TILE_ZOOM ?? 14),
     opacity: sheetOpacity.value,
     // The single-file standalone build carries no tiles. Fail to nothing so it
     // falls back to bare relief instead of a grid of broken images.
