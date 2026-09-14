@@ -1,0 +1,193 @@
+/*
+ * Sunlight legibility drives most of this: heavy weights, large type, hard
+ * contrast, no thin hairlines. If it is not readable at arm's length on a
+ * bright day it has failed regardless of how it looks indoors.
+ */
+:root {
+  --bg: #12160f;
+  --surface: #1b2117;
+  --surface-high: #252d20;
+  --line: #38412f;
+  --text: #f4f7ee;
+  --text-dim: #a7b199;
+
+  --fresh: #5fd68a;
+  --recent: #ffd24d;
+  --stale: #ff8a3d;
+  --lost: #ff5252;
+
+  --you: #ffffff;
+  --alert: #ff5252;
+
+  --tap: 48px;
+  --strip-h: 56px;
+  --tabs-h: 60px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.age-fresh { color: var(--fresh); }
+.age-recent { color: var(--recent); }
+.age-stale { color: var(--stale); }
+.age-lost { color: var(--lost); }
+
+.bg-fresh { background: var(--fresh); }
+.bg-recent { background: var(--recent); }
+.bg-stale { background: var(--stale); }
+.bg-lost { background: var(--lost); }
+
+/* Leaflet's default attribution is a bright slab across the bottom of a dark
+   map. It has to stay — the tiles are CC-BY-SA — but it does not have to shout. */
+.leaflet-control-attribution {
+  background: rgba(10, 13, 8, 0.72) !important;
+  color: var(--text-dim) !important;
+  font-size: 10px !important;
+  padding: 1px 6px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--text-dim) !important;
+}
+
+.leaflet-control-attribution svg {
+  display: none !important;
+}
+
+/* --- Leaflet markers ----------------------------------------------------- */
+
+.leaflet-container {
+  background: #2a2f24;
+  font-family: inherit;
+}
+
+.mate-marker {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+.mate-marker__halo {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  opacity: 0.55;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.mate-marker__dot {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #12160f;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #12160f;
+}
+
+.mate-marker__label {
+  position: absolute;
+  left: 0;
+  top: 20px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(10, 13, 8, 0.88);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.mate-marker__age {
+  font-weight: 800;
+  margin-left: 6px;
+}
+
+.you-marker__dot {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--you);
+  border: 4px solid #1d6fd0;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.relay-marker__box {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: rgba(10, 13, 8, 0.9);
+  border: 2px solid var(--fresh);
+  color: var(--fresh);
+}
+
+.relay-marker__box--suspect {
+  border-color: var(--recent);
+  color: var(--recent);
+}
+
+.relay-marker__box--down {
+  border-color: var(--lost);
+  color: var(--lost);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .relay-marker__box--down { animation: none; }
+}
