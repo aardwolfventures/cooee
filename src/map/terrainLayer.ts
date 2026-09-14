@@ -1,15 +1,14 @@
 /**
- * A base map rendered from the simulation's own elevation model.
+ * Shaded relief and contours drawn from the loaded elevation model.
  *
- * The prototype previously depended on OpenTopoMap, which means it depends on
- * a connection — an awkward thing for an app whose entire subject is being
- * somewhere without one. This layer draws shaded relief and contour lines
- * straight from `elevationAt`, so the map works with no network at all, and it
- * is consistent by construction with the cross-sections and walk times, since
- * all three read the same surface.
+ * This sits underneath the Forestry Corporation sheet and shows through
+ * wherever that sheet is dialled back or has not loaded. Both come off local
+ * assets, so the map works with no network at all — which matters for an app
+ * whose entire subject is being somewhere without one.
  *
- * Real topographic tiles still layer on top when they load. This is the floor,
- * not the ceiling.
+ * It reads the same real DEM as the cross-sections and walk times, so the
+ * relief, the printed 20 m contours and the quoted climb all describe the same
+ * hillside.
  */
 import L from 'leaflet'
 import { elevationAt } from '@/sim/terrain'
@@ -19,15 +18,18 @@ const TILE_PX = 256
 /** Elevation samples per tile edge. Upscaled to the tile, which shaded relief
  *  tolerates well and which keeps a tile under a few milliseconds on a phone. */
 const GRID = 128
-const CONTOUR_INTERVAL_M = 100
+/** Matches the printed sheet, so the drawn lines and the sheet's own agree. */
+const CONTOUR_INTERVAL_M = 20
 
-/** Only draw terrain near the hunt. The surface is periodic, and tiling fake
- *  mountains across the whole planet would be worse than an empty map. */
-const AOI_HALF_LAT = 0.16
-const AOI_HALF_LON = 0.2
+/** Only draw where the elevation model actually has data. Outside the sheet
+ *  every sample clamps to the edge, which would smear the border colour across
+ *  the rest of the world. */
+const AOI_HALF_LAT = 0.26
+const AOI_HALF_LON = 0.24
 
-const ELEV_MIN = 380
-const ELEV_MAX = 1500
+/** The sheet's real range: the Abercrombie gorge floor to the highest tops. */
+const ELEV_MIN = 490
+const ELEV_MAX = 1380
 
 interface Stop {
   at: number

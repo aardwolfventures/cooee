@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { useSimStore } from '@/stores/sim'
 import { RELAY, YOU_NAME } from '@/sim/mates'
@@ -9,8 +9,10 @@ import type { MateView } from '@/stores/sim'
 
 const sim = useSimStore()
 const host = ref<HTMLDivElement | null>(null)
+const sheetOpacity = computed(() => sim.sheetOpacity)
 
 let map: L.Map | null = null
+let sheetLayer: L.TileLayer | null = null
 let youMarker: L.Marker | null = null
 let relayMarker: L.Marker | null = null
 const mateMarkers = new Map<string, L.Marker>()
@@ -146,23 +148,40 @@ onMounted(() => {
     preferCanvas: false,
   })
 
-  // Shaded relief drawn from the simulation's own elevation model. It needs no
-  // network, so the map is never blank — which matters for an app about being
-  // somewhere without a connection.
+  // Shaded relief from the elevation model. It needs no network, so the map is
+  // never blank — which matters for an app about being somewhere without a
+  // connection — and it carries on below the sheet's own zoom range.
   createTerrainLayer().addTo(map)
 
-  // Real topography on top when it loads. If it does not, the layer above is
-  // still a legible map rather than an empty grey field.
-  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+  // The Forestry Corporation sheet, rasterised from the supplied GeoPDF and
+  // reprojected to these tiles. Also local, for the same reason. Its native
+  // range is z11-z14; Leaflet over-zooms the z14 tiles past that rather than
+  // dropping the sheet when someone pinches in.
+  sheetLayer = L.tileLayer(`${import.meta.env.BASE_URL}map/{z}/{x}/{y}.png`, {
+    minZoom: 9,
     maxZoom: 17,
+    minNativeZoom: 11,
+    maxNativeZoom: 14,
+    opacity: sheetOpacity.value,
+    // The single-file standalone build carries no tiles. Fail to nothing so it
+    // falls back to bare relief instead of a grid of broken images.
+    errorTileUrl:
+      'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
     attribution:
-      'Relief generated from the simulation terrain model | Tiles: &copy; OpenTopoMap (CC-BY-SA), data &copy; OpenStreetMap contributors, SRTM',
-  }).addTo(map)
+      'Vulcan State Forest 1:50,000 hunting map &copy; Forestry Corporation of NSW ' +
+      '(sheet expired 31/3/2023 — zoning is not current) | ' +
+      'Relief and walk times from AWS Terrain Tiles (SRTM-derived)',
+  })
+  sheetLayer.addTo(map)
 
   render()
   fitEveryone()
 
   refreshHandle = window.setInterval(render, 250)
+})
+
+watch(sheetOpacity, (value) => {
+  sheetLayer?.setOpacity(value)
 })
 
 onBeforeUnmount(() => {

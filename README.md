@@ -1,7 +1,8 @@
 # Cooee — v1 prototype
 
-A clickable prototype for off-grid mate tracking, running entirely on fake
-data. No radio, no backend, no accounts, no hardware.
+A clickable prototype for off-grid mate tracking, set in Vulcan State Forest,
+NSW. The mates and the radio between them are simulated; the map and the
+terrain are real. No radio, no backend, no accounts, no hardware.
 
 Its single job is to find out whether the interaction is right before anyone
 spends money or writes production code. The output of this phase is not an app.
@@ -31,7 +32,7 @@ minutes after you make it.
 Portrait phone first. Three screens and a status strip, and deliberately
 nothing else:
 
-- **Map** — mates as dots over real topography, your position, the relay.
+- **Map** — mates as dots over the real Vulcan sheet, your position, the relay.
 - **Mate detail** — tap a dot. Distance, bearing, elevation, age of the fix in
   words, terrain cross-section, slope-adjusted walk time.
 - **Messages** — one group thread, six presets, per-message delivery state.
@@ -104,20 +105,18 @@ staleness ramp, so a mate's own colour cannot be mistaken for an age cue.
 
 ## What is fake, and deliberately so
 
-- **Terrain** (`src/sim/terrain.ts`) is a synthetic surface shaped like the
-  Wonnangatta Valley, not a real DEM. It is deterministic and continuous, so
-  cross-sections and walk times are self-consistent. Swapping in real elevation
-  data touches this one file.
-- **Walk times** use Tobler's hiking function over that surface, plus 25% for
-  scrub and picking a line. The number is honest about the model; the model is
-  not the mountain.
-- **Routes** are hand-authored polylines. A random walk would have looked wrong
+- **Walk times** use Tobler's hiking function over the real surface, plus 25%
+  for scrub and picking a line. The terrain is now real (see below), so the
+  remaining fiction is the 25% and Tobler itself.
+- **Routes** are static polylines, but they were traced over the real elevation
+  model rather than drawn by eye: each one follows a spur or a gully out of
+  camp and stays inside the state forest. A random walk would have looked wrong
   immediately — people follow spurs, rivers and saddles.
-- **The party** is Mike behind the phone with Ben, Marshy and Rod out in front,
-  defined in `src/sim/mates.ts`. Real names, deliberately: a dot labelled
-  "Mate 2" is not the same test as a dot labelled with someone you know,
-  because the thing being measured is whether people trust a stale position,
-  and trust attaches to a person.
+- **The party** is Mike behind the phone with Ben, Marshy, Rod, Derrick, Sahil
+  and Dan out in front, defined in `src/sim/mates.ts`. Real names,
+  deliberately: a dot labelled "Mate 2" is not the same test as a dot labelled
+  with someone you know, because the thing being measured is whether people
+  trust a stale position, and trust attaches to a person.
 
 ## What it deliberately does not do
 
@@ -129,10 +128,34 @@ It also has no waypoints, no tracks, no layers panel, no mate list and no
 bearing arrow. The last two are absent on purpose: questions 4 and 5 are
 answered by whether anyone asks for them.
 
+## What is real
+
+The map and the ground under it are not simulated.
+
+- **The base map** is the Forestry Corporation of NSW 1:50,000 hunting sheet
+  for Vulcan State Forest, rasterised from the supplied GeoPDF and reprojected
+  into tiles. It shows the roads, tracks, creeks, 20 m contours and forest
+  zoning you would actually navigate by.
+- **Elevation** is an SRTM-derived model at roughly 30 m posts covering the
+  same sheet, so cross-sections, elevation readings and slope-adjusted walk
+  times describe the real hillside rather than a formula. Vulcan is a dissected
+  plateau around 1100-1300 m with the Abercrombie gorge cut into one corner —
+  quite unlike the deep river valley an earlier synthetic surface modelled.
+- **Both are served from the app itself**, not from a tile provider, so the map
+  works with no connection at all. For an app whose entire subject is being
+  somewhere without one, that had to stop being a to-do.
+
+`scripts/data/` documents how both are built and how the alignment was checked.
+
+> **The supplied sheet expired on 31 March 2023.** Its hunting-exclusion and
+> bow-only zoning is therefore out of date, and this prototype is not a
+> reference for where it is legal to hunt. Check current closures with Forestry
+> Corporation before relying on any of it.
+
 ## Known limitations
 
-- **Map tiles are online-only.** OpenTopoMap over HTTPS, which is fine for a
-  kitchen-table prototype and is the first thing to change before this goes
-  near a valley with no signal.
 - **Nothing persists.** Reload and the simulation restarts. That is intended:
   the brief says v1 persists nothing that matters.
+- **The single-file build has no sheet.** `pnpm build:standalone` inlines the
+  elevation model but not 791 map tiles, so it shows shaded relief and contours
+  without the printed map over the top.

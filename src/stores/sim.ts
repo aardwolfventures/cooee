@@ -32,6 +32,13 @@ export const useSimStore = defineStore('sim', () => {
   const selectedMateId = ref<string | null>(null)
   const tab = ref<Tab>('map')
   const devPanelOpen = ref(false)
+  /**
+   * How strongly the Forestry sheet reads over the shaded relief. The build
+   * plan asks for this wherever an imported map is laid over a topo base: the
+   * sheet's flat zoning fills hide the landform, and being able to dial it back
+   * is how you see both at once.
+   */
+  const sheetOpacity = ref(0.85)
   const frame = shallowRef(0)
 
   // --- Clock ---------------------------------------------------------------
@@ -206,6 +213,7 @@ export const useSimStore = defineStore('sim', () => {
     speed,
     tab,
     devPanelOpen,
+    sheetOpacity,
     activeScenarioId,
     scenarios: SCENARIOS,
     selectedMateId,

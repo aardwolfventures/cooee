@@ -2,8 +2,12 @@
  * Bundle the built app into one self-contained HTML file.
  *
  * The point is a preview that needs nothing: no clone, no install, no dev
- * server, no hosting. Double-click it and it runs. Map tiles still come from
- * the network, so it wants a connection, but everything else is inlined.
+ * server, no hosting. Double-click it and it runs, offline.
+ *
+ * The elevation model is inlined too, because the app cannot start without it
+ * and a file:// page cannot fetch. The Forestry sheet's 791 tiles are not —
+ * that would be a 14 MB HTML file — so this build shows shaded relief and
+ * contours off the real DEM, without the printed sheet over the top.
  *
  *   pnpm build:standalone   ->   dist-standalone/cooee.html
  */
@@ -28,6 +32,14 @@ const css = readFileSync(join(DIST, 'assets', cssFile), 'utf8')
 // early, so neutralise the sequence rather than trusting it not to appear.
 const js = readFileSync(join(DIST, 'assets', jsFile), 'utf8').replace(/<\/script/gi, '<\\/script')
 
+const demMeta = readFileSync('public/terrain/elevation.json', 'utf8')
+const demBody = readFileSync('public/terrain/elevation.bin.gz').toString('base64')
+const demTag =
+  `<script>window.__COOEE_DEM__={meta:${demMeta},body:"${demBody}"}<\/script>`.replace(
+    '<\\/script>',
+    '</scr' + 'ipt>',
+  )
+
 const favicon = readFileSync('public/favicon.svg', 'utf8')
 const faviconUri = `data:image/svg+xml;base64,${Buffer.from(favicon).toString('base64')}`
 
@@ -38,7 +50,7 @@ html = html
   .replace(/<link rel="stylesheet"[^>]*href="[^"]*\.css"[^>]*>/, () => `<style>${css}</style>`)
   .replace(
     /<script type="module"[^>]*src="[^"]*\.js"[^>]*><\/script>/,
-    () => `<script type="module">${js}</script>`,
+    () => `${demTag}<script type="module">${js}</script>`,
   )
   .replace(/href="[^"]*favicon\.svg"/, () => `href="${faviconUri}"`)
 

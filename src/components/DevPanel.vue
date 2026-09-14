@@ -130,6 +130,19 @@ const supersededTotal = computed(() =>
           max="50"
           step="1"
         />
+
+        <h3 class="dev__label">
+          Map sheet
+          <span class="dev__value">{{ Math.round(sim.sheetOpacity * 100) }}%</span>
+        </h3>
+        <input
+          v-model.number="sim.sheetOpacity"
+          class="dev__slider"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+        />
       </section>
 
       <section class="dev__section">

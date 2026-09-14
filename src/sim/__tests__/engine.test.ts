@@ -1,7 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { readFile } from 'node:fs/promises'
 import { SimEngine, RELAY_DOWN_MS } from '../engine'
 import { scenarioById } from '../scenarios'
+import { loadDem } from '../dem'
 import { metresBetween } from '@/lib/geo'
+
+/**
+ * The real elevation model, read off disk instead of over HTTP. Reading the
+ * bytes is the only thing swapped out — the gzip, the delta decode and every
+ * sample below are the same code the app runs.
+ */
+beforeAll(async () => {
+  await loadDem({
+    meta: async () => JSON.parse(await readFile('public/terrain/elevation.json', 'utf8')),
+    body: async () => new Uint8Array(await readFile('public/terrain/elevation.bin.gz')),
+  })
+})
 
 /** Run the clock forward in realistic slices. */
 function run(engine: SimEngine, seconds: number): void {

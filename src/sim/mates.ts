@@ -9,7 +9,7 @@
  * dot labelled with someone you know, because the thing being measured is
  * whether people trust a stale position — and trust attaches to a person.
  *
- * Tracks are authored in kilometres east/north of ORIGIN (the Wonnangatta
+ * Tracks are authored in kilometres east/north of ORIGIN (the camp in Vulcan
  * Station flat) and converted to lat/lon, because reasoning about a walking
  * route in kilometres is far easier than in decimal degrees.
  */
@@ -60,14 +60,17 @@ export const MATE_SEEDS: MateSeed[] = [
     fullName: 'Ben Lake',
     tag: 'B',
     colour: '#7ab8ff',
-    // Up the river west, then climbing the spur onto the northern tops.
+    // North up the spur between Poplar Road and Willow Springs, onto the tops.
     route: [
-      { east: -0.2, north: 0.1 },
-      { east: -1.4, north: 0.5 },
-      { east: -2.6, north: 0.4 },
-      { east: -3.4, north: 1.2 },
-      { east: -3.9, north: 2.4 },
-      { east: -4.2, north: 3.6 },
+      { east: 0.00, north: 0.00 },
+      { east: 0.15, north: 0.52 },
+      { east: 0.25, north: 0.86 },
+      { east: 0.28, north: 1.39 },
+      { east: 0.39, north: 1.73 },
+      { east: 0.53, north: 2.25 },
+      { east: 0.72, north: 2.75 },
+      { east: 0.76, north: 3.11 },
+      { east: 0.80, north: 3.63 },
     ],
     startFraction: 0.15,
     activity: 'moving',
@@ -79,14 +82,17 @@ export const MATE_SEEDS: MateSeed[] = [
     fullName: 'Paul Marsh',
     tag: 'M',
     colour: '#c58cff',
-    // South-east, climbing hard onto the high ridge and sidling along it.
+    // South-east along the ridge toward Retreat River, sidling the high side.
     route: [
-      { east: 0.4, north: -0.3 },
-      { east: 1.3, north: -1.2 },
-      { east: 2.2, north: -2.1 },
-      { east: 3.4, north: -2.6 },
-      { east: 4.6, north: -2.9 },
-      { east: 5.6, north: -3.4 },
+      { east: 0.00, north: 0.00 },
+      { east: 0.42, north: -0.33 },
+      { east: 0.71, north: -0.55 },
+      { east: 1.23, north: -0.61 },
+      { east: 1.51, north: -0.81 },
+      { east: 1.97, north: -1.09 },
+      { east: 2.41, north: -1.34 },
+      { east: 2.69, north: -1.56 },
+      { east: 3.16, north: -1.81 },
     ],
     startFraction: 0.3,
     activity: 'moving',
@@ -98,13 +104,17 @@ export const MATE_SEEDS: MateSeed[] = [
     fullName: 'Rod Miller',
     tag: 'R',
     colour: '#ff8fb1',
-    // Stays low, east along the river flats, glassing the far faces.
+    // Due east, staying low along the drainage under Forest Link.
     route: [
-      { east: 0.5, north: 0.2 },
-      { east: 1.7, north: -0.1 },
-      { east: 2.9, north: 0.3 },
-      { east: 4.0, north: 0.1 },
-      { east: 5.2, north: -0.2 },
+      { east: 0.00, north: 0.00 },
+      { east: 0.54, north: -0.05 },
+      { east: 0.90, north: -0.03 },
+      { east: 1.42, north: 0.01 },
+      { east: 1.77, north: -0.02 },
+      { east: 2.30, north: -0.11 },
+      { east: 2.82, north: -0.13 },
+      { east: 3.16, north: -0.05 },
+      { east: 3.69, north: -0.08 },
     ],
     startFraction: 0.45,
     activity: 'stationary',
@@ -116,14 +126,17 @@ export const MATE_SEEDS: MateSeed[] = [
     fullName: 'Derrick Cruz',
     tag: 'DC',
     colour: '#4dd0e1',
-    // North-east through the timber, working the heads of the gullies.
+    // North-east onto the Old Mill Road ridge, working the head of the gullies.
     route: [
-      { east: 0.3, north: 0.5 },
-      { east: 1.1, north: 1.6 },
-      { east: 1.6, north: 2.8 },
-      { east: 2.6, north: 3.5 },
-      { east: 3.8, north: 3.9 },
-      { east: 4.9, north: 4.4 },
+      { east: 0.00, north: 0.00 },
+      { east: 0.20, north: 0.50 },
+      { east: 0.29, north: 0.84 },
+      { east: 0.76, north: 1.11 },
+      { east: 0.94, north: 1.42 },
+      { east: 1.40, north: 1.68 },
+      { east: 1.84, north: 1.98 },
+      { east: 2.13, north: 2.18 },
+      { east: 2.62, north: 2.42 },
     ],
     startFraction: 0.2,
     activity: 'moving',
@@ -135,13 +148,17 @@ export const MATE_SEEDS: MateSeed[] = [
     fullName: 'Sahil Prasad',
     tag: 'S',
     colour: '#b0bec5',
-    // South-west, down-valley then up onto the shaded southern faces.
+    // South-west down the gully past Claremont, toward Swatchfield.
     route: [
-      { east: -0.4, north: -0.4 },
-      { east: -1.5, north: -1.1 },
-      { east: -2.4, north: -1.9 },
-      { east: -3.1, north: -2.9 },
-      { east: -4.0, north: -3.6 },
+      { east: 0.00, north: 0.00 },
+      { east: -0.29, north: -0.44 },
+      { east: -0.47, north: -0.75 },
+      { east: -0.70, north: -1.24 },
+      { east: -0.82, north: -1.58 },
+      { east: -1.00, north: -2.08 },
+      { east: -1.20, north: -2.58 },
+      { east: -1.35, north: -2.91 },
+      { east: -1.56, north: -3.40 },
     ],
     startFraction: 0.25,
     activity: 'moving',
@@ -153,12 +170,17 @@ export const MATE_SEEDS: MateSeed[] = [
     fullName: 'Dan Galea',
     tag: 'DG',
     colour: '#8a92e8',
-    // Due north up the side creek to the saddle, then sitting on it.
+    // South along the spur above Cooks Creek, holding the high ground.
     route: [
-      { east: -0.6, north: 0.8 },
-      { east: -0.9, north: 1.9 },
-      { east: -1.1, north: 3.0 },
-      { east: -1.4, north: 4.1 },
+      { east: 0.00, north: 0.00 },
+      { east: 0.06, north: -0.53 },
+      { east: 0.11, north: -0.88 },
+      { east: 0.25, north: -1.40 },
+      { east: 0.36, north: -1.74 },
+      { east: 0.50, north: -2.27 },
+      { east: 0.64, north: -2.79 },
+      { east: 0.73, north: -3.13 },
+      { east: 0.76, north: -3.66 },
     ],
     startFraction: 0.35,
     activity: 'moving',
@@ -170,7 +192,10 @@ export const MATE_SEEDS: MateSeed[] = [
 export const RELAY = {
   id: 'relay',
   name: 'Relay',
-  position: fromLocalKm({ east: 0.9, north: 2.2 }),
+  // The prominent knoll 2 km south-west of camp: about 1260 m, standing ~26 m
+  // over everything within 600 m of it. Antenna height beats transmit power, so
+  // where the relay sits is the single most consequential thing in the mesh.
+  position: fromLocalKm({ east: -0.8, north: -1.8 }),
 } as const
 
 export function routeToLatLon(route: LocalKm[]): LatLon[] {

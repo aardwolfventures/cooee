@@ -1,0 +1,10 @@
+{
+  "encoding": "terrarium",
+  "zoom": 12,
+  "pixelOriginX": 959849,
+  "pixelOriginY": 628470,
+  "width": 1323,
+  "height": 1721,
+  "source": "AWS Terrain Tiles (terrarium), SRTM-derived, ~30 m",
+  "format": "int16-le row-delta, gzip"
+}

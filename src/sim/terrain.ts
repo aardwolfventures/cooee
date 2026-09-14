@@ -1,17 +1,28 @@
 /**
- * Synthetic terrain for the Wonnangatta Valley, Victorian High Country.
+ * Terrain for Vulcan State Forest, NSW Central Tablelands.
  *
- * This is deliberately fake. The brief allows it: a plausible hand-built
- * surface tests the interaction exactly as well as a real DEM, and swapping in
- * real elevation data later touches only this file. What matters is that the
- * surface is deterministic, continuous, and has the shape of real high country
- * — a sinuous river valley around 400 m with spurs and ridges climbing past
- * 1400 m — so that cross-sections and slope-adjusted walk times read honestly.
+ * Elevation is real, not modelled: `elevationAt` reads the SRTM-derived grid
+ * loaded by `./dem`, covering the same extent as the Forestry Corporation
+ * 1:50,000 sheet the map draws. Cross-sections, slope-adjusted walk times and
+ * the shaded-relief base layer all read this one surface, so they agree with
+ * each other and with the printed contours.
+ *
+ * This replaced a synthetic surface shaped like the Wonnangatta Valley — a
+ * river valley with a 400 m floor and 1400 m tops. Vulcan is a different kind
+ * of country: a dissected plateau sitting around 1100-1300 m, with the
+ * Abercrombie gorge cut into the south-west corner. Moving the prototype here
+ * without moving the terrain would have put honest-looking numbers on the
+ * wrong landform.
  */
 import type { LatLon } from '@/lib/geo'
+import { sampleElevation } from './dem'
 
-/** Wonnangatta Station site, roughly. Everything is positioned relative to this. */
-export const ORIGIN: LatLon = { lat: -37.1897, lon: 146.8683 }
+/**
+ * Camp: a road junction in the Vulcan State Forest block south-east of Black
+ * Springs, inside the area the sheet zones as Hunting Forest. Everything is
+ * positioned relative to this.
+ */
+export const ORIGIN: LatLon = { lat: -33.85137, lon: 149.7697 }
 
 const M_PER_DEG_LAT = 111_132
 const M_PER_DEG_LON = 111_320 * Math.cos((ORIGIN.lat * Math.PI) / 180)
@@ -36,22 +47,9 @@ export function fromLocalKm(local: LocalKm): LatLon {
   }
 }
 
-/** North offset of the river centreline at a given easting, in kilometres. */
-function riverNorthAt(east: number): number {
-  return 0.9 * Math.sin(east / 2.3) + 0.35 * Math.sin(east / 0.9 + 1.2)
-}
-
-/** Metres above sea level at a point. Continuous and deterministic. */
+/** Metres above sea level at a point. */
 export function elevationAt(p: LatLon): number {
-  const { east, north } = toLocalKm(p)
-  const fromRiver = Math.abs(north - riverNorthAt(east))
-
-  const valley = 400 + 700 * Math.tanh(fromRiver / 1.8)
-  const ridges = 200 * Math.sin(east / 1.35 + 0.6) * Math.cos(north / 1.7 - 0.4)
-  const spurs = 90 * Math.sin(east / 0.55 - 1.1) * Math.sin(north / 0.62 + 0.3)
-  const rough = 28 * Math.sin(east / 0.21) * Math.cos(north / 0.19)
-
-  return valley + ridges + spurs + rough
+  return sampleElevation(p)
 }
 
 /** Elevation samples along a straight line, for the cross-section view. */
