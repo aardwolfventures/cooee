@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { useSimStore } from '@/stores/sim'
 import { RELAY, YOU_NAME } from '@/sim/mates'
+import { createTerrainLayer } from '@/map/terrainLayer'
 import { ageShort, fadeOpacity, haloDiameterPx } from '@/lib/staleness'
 import type { MateView } from '@/stores/sim'
 
@@ -145,13 +146,17 @@ onMounted(() => {
     preferCanvas: false,
   })
 
-  // Free, topographic, and honest about relief. Not offline-capable, which is
-  // fine for a kitchen-table prototype and is the first thing to change when
-  // this goes anywhere near a valley with no signal.
+  // Shaded relief drawn from the simulation's own elevation model. It needs no
+  // network, so the map is never blank — which matters for an app about being
+  // somewhere without a connection.
+  createTerrainLayer().addTo(map)
+
+  // Real topography on top when it loads. If it does not, the layer above is
+  // still a legible map rather than an empty grey field.
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     maxZoom: 17,
     attribution:
-      'Map data: &copy; OpenStreetMap contributors, SRTM | Style: &copy; OpenTopoMap (CC-BY-SA)',
+      'Relief generated from the simulation terrain model | Tiles: &copy; OpenTopoMap (CC-BY-SA), data &copy; OpenStreetMap contributors, SRTM',
   }).addTo(map)
 
   render()

@@ -183,7 +183,7 @@ const supersededTotal = computed(() =>
 .dev {
   position: fixed;
   inset: 0;
-  z-index: 950;
+  z-index: 1300;
   display: flex;
   justify-content: flex-end;
 }

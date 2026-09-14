@@ -95,7 +95,7 @@ function openMessages(): void {
 .sheet {
   position: fixed;
   inset: 0;
-  z-index: 900;
+  z-index: 1200;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -181,11 +181,16 @@ function openMessages(): void {
   font-variant-numeric: tabular-nums;
 }
 
-.sheet__cell small {
+.sheet__cell dd small {
+  display: block;
+  margin-top: 2px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-dim);
-  margin-left: 4px;
+}
+
+.sheet__cell dd {
+  white-space: nowrap;
 }
 
 .sheet__walknote {
