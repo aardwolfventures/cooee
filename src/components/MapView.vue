@@ -106,6 +106,32 @@ function icon(html: string): L.DivIcon {
   return L.divIcon({ html, className: '', iconSize: [0, 0] })
 }
 
+/** Last markup painted per marker, so an unchanged frame touches no DOM. */
+const painted = new Map<string, string>()
+
+/**
+ * Update a marker's contents without replacing the marker.
+ *
+ * `setIcon` throws the icon's root element away and builds a new one. Doing
+ * that on a 250 ms timer quietly breaks tapping: a tap is only a click if the
+ * press and the release land on the same element, so any tap that straddles a
+ * refresh is swallowed and the dot has to be tapped again. Writing into the
+ * existing element keeps the root — and therefore Leaflet's interactive target
+ * — alive across the swap, so the click always lands.
+ */
+function paint(marker: L.Marker, key: string, html: string): void {
+  if (painted.get(key) === html) {
+    return
+  }
+  painted.set(key, html)
+  const element = marker.getElement()
+  if (element === undefined || element === null) {
+    marker.setIcon(icon(html))
+    return
+  }
+  element.innerHTML = html
+}
+
 function render(): void {
   if (map === null) {
     return
@@ -126,7 +152,7 @@ function render(): void {
       continue
     }
     existing.setLatLng(latLng)
-    existing.setIcon(icon(mateMarkerHtml(view)))
+    paint(existing, view.mate.id, mateMarkerHtml(view))
   }
 
   const you = L.latLng(sim.engine.youPosition.lat, sim.engine.youPosition.lon)
@@ -135,7 +161,7 @@ function render(): void {
     youMarker.addTo(map)
   } else {
     youMarker.setLatLng(you)
-    youMarker.setIcon(icon(youMarkerHtml()))
+    paint(youMarker, YOU_ID, youMarkerHtml())
   }
 
   const relay = L.latLng(RELAY.position.lat, RELAY.position.lon)
@@ -150,7 +176,7 @@ function render(): void {
     })
     relayMarker.addTo(map)
   } else {
-    relayMarker.setIcon(icon(relayMarkerHtml()))
+    paint(relayMarker, 'relay', relayMarkerHtml())
   }
 }
 
