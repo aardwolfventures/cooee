@@ -19,8 +19,19 @@ function close(): void {
   sim.selectMate(null)
 }
 
-function openMessages(): void {
-  sim.tab = 'messages'
+/**
+ * Straight into a thread with this one person.
+ *
+ * The detail sheet closes behind it. Stacking a thread on top of the detail
+ * would leave two things to dismiss to get back to the map, and the map is
+ * where the app lives.
+ */
+function openPrivateThread(): void {
+  const id = view.value?.mate.id
+  if (id === undefined) {
+    return
+  }
+  sim.openThread(id)
   close()
 }
 </script>
@@ -86,7 +97,12 @@ function openMessages(): void {
         </span>
       </p>
 
-      <button class="sheet__message" type="button" @click="openMessages">Message</button>
+      <button class="sheet__message" type="button" @click="openPrivateThread">
+        Message {{ view.mate.name }}
+        <span v-if="sim.unreadFor(view.mate.id) > 0" class="sheet__message-count">
+          {{ sim.unreadFor(view.mate.id) }}
+        </span>
+      </button>
     </div>
   </div>
 </template>
@@ -212,6 +228,10 @@ function openMessages(): void {
 }
 
 .sheet__message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
   min-height: 52px;
   border-radius: 12px;
@@ -220,5 +240,17 @@ function openMessages(): void {
   color: var(--text);
   font-size: 17px;
   font-weight: 800;
+}
+
+.sheet__message-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: var(--recent);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 24px;
 }
 </style>

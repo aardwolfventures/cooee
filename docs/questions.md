@@ -35,14 +35,21 @@ Observed:
 
 ### 3. Which of the six presets get used, and which three are missing?
 
+The group thread and the private threads deliberately share the same six. A
+tailored private set would make this question unanswerable — you could no
+longer say which of six presets people reached for, only which of eleven.
+
 Used:
 
 Asked for but absent:
 
+Different in a private thread than in the group one:
+
 ### 4. Do people open the map first, or want a list of mates first?
 
 There is deliberately no list in v1, so this is answered by whether anyone asks
-for one.
+for one. The tab bar is gone too, so the map is now the only screen — if a list
+is wanted, there is nowhere it could be hiding.
 
 Observed:
 
@@ -94,6 +101,40 @@ frozen dot?
 Observed:
 
 ### 9. What do they reach for that is not there?
+
+Observed:
+
+### 10. Does a private message get noticed, and does it change what people say?
+
+**Asked for, unprompted, before the first test round** — the request was for
+private messages alongside the group one. Built as two threads reached from the
+map: a button for everyone, a mate's own detail sheet for a word with just
+them. There is no messages screen and no tab bar any more.
+
+That removes the only thing that could carry a badge, which is the risk. A
+private message announces itself with a count on that mate's dot and nothing
+else — it deliberately does not appear in the bubble over the dot, because a
+bubble is readable by whoever is looking over your shoulder.
+
+Still to watch:
+
+- A mate opens a private thread with you unprompted every twenty to forty
+  minutes of simulated time. How long before it is noticed, and what is noticed
+  first — the count on the dot, or nothing until they went looking?
+- Does anything get said privately that would not have been said to the group?
+  If not, the private thread has not earned its place.
+- A private message has to reach one named person and come back, so it goes
+  unacknowledged far more often than the same words to everyone. Does that read
+  as the link being bad, or as the person ignoring them?
+
+Time to first unprompted mention of a private message:
+
+Observed:
+
+### 11. Do people put their own name in, and does being on the map change anything?
+
+The app asks who is holding the phone on first load, and takes them out of the
+party if they were in it.
 
 Observed:
 

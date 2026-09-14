@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { useSimStore } from '@/stores/sim'
-import { RELAY, YOU_ID, YOU_NAME } from '@/sim/mates'
+import { RELAY, YOU_ID } from '@/sim/mates'
 import { createTerrainLayer } from '@/map/terrainLayer'
 import { ageShort, fadeOpacity, haloDiameterPx } from '@/lib/staleness'
 import type { MateView } from '@/stores/sim'
@@ -57,6 +57,23 @@ function courseHtml(courseDeg: number | null): string {
   return `<span class="mate-marker__course" style="transform:rotate(${courseDeg.toFixed(0)}deg)"></span>`
 }
 
+/**
+ * The count of private messages waiting from this mate.
+ *
+ * With the messages tab gone there is no bar left to badge, so this is the
+ * only cue that somebody has taken you aside. It sits on the dot rather than
+ * over it because a bubble is a public thing — see `bubbleByAuthor` in the
+ * store — and whether a count alone gets noticed is precisely what this
+ * arrangement is being tested for.
+ */
+function unreadHtml(mateId: string): string {
+  const count = sim.unreadByMate.get(mateId)
+  if (count === undefined) {
+    return ''
+  }
+  return `<span class="mate-marker__unread">${count > 9 ? '9+' : count}</span>`
+}
+
 function mateMarkerHtml(view: MateView): string {
   const { mate, ageMs, bucket } = view
   const treatment = sim.engine.settings.stalenessTreatment
@@ -79,7 +96,7 @@ function mateMarkerHtml(view: MateView): string {
       ${bubbleHtml(mate.id)}
       ${halo}
       ${courseHtml(view.courseDeg)}
-      <span class="mate-marker__dot${mate.tag.length > 1 ? ' mate-marker__dot--two' : ''}" style="background:${mate.colour}">${tag}</span>
+      <span class="mate-marker__dot${mate.tag.length > 1 ? ' mate-marker__dot--two' : ''}" style="background:${mate.colour}">${tag}${unreadHtml(mate.id)}</span>
       <span class="mate-marker__label">${name}${ageLabel}</span>
     </div>
   `
@@ -99,7 +116,7 @@ function youMarkerHtml(): string {
   // A cone rather than an arrow: you know roughly which way you are pointed,
   // not precisely, and a hard needle would claim a precision no compass has.
   const cone = `<span class="you-marker__cone" style="transform:rotate(${sim.engine.youHeadingDeg.toFixed(0)}deg)"></span>`
-  return `<div class="mate-marker">${bubbleHtml(YOU_ID)}${cone}<span class="you-marker__dot"></span><span class="mate-marker__label">${escapeHtml(YOU_NAME)}</span></div>`
+  return `<div class="mate-marker">${bubbleHtml(YOU_ID)}${cone}<span class="you-marker__dot"></span><span class="mate-marker__label">${escapeHtml(sim.youName)}</span></div>`
 }
 
 function icon(html: string): L.DivIcon {
@@ -135,6 +152,20 @@ function paint(marker: L.Marker, key: string, html: string): void {
 function render(): void {
   if (map === null) {
     return
+  }
+
+  // The party can change under us: whoever is holding the phone is taken out
+  // of it, so a mate who was on the map a moment ago may no longer exist.
+  // Their marker has to go with them or it sits there as a dot that can never
+  // update again — the exact thing this app is meant to make impossible to
+  // mistake for a live one.
+  const present = new Set(sim.mateViews.map((v) => v.mate.id))
+  for (const [id, marker] of mateMarkers) {
+    if (!present.has(id)) {
+      marker.remove()
+      mateMarkers.delete(id)
+      painted.delete(id)
+    }
   }
 
   for (const view of sim.mateViews) {
@@ -203,7 +234,7 @@ onMounted(() => {
   }
   map = L.map(host.value, {
     zoomControl: false,
-    attributionControl: true,
+    attributionControl: false,
     preferCanvas: false,
   })
 
@@ -229,10 +260,6 @@ onMounted(() => {
     // falls back to bare relief instead of a grid of broken images.
     errorTileUrl:
       'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-    attribution:
-      'Vulcan State Forest 1:50,000 hunting map &copy; Forestry Corporation of NSW ' +
-      '(sheet expired 31/3/2023 — zoning is not current) | ' +
-      'Relief and walk times from AWS Terrain Tiles (SRTM-derived)',
   })
   sheetLayer.addTo(map)
 
@@ -259,22 +286,23 @@ watch(
     fitEveryone()
   },
 )
-
-watch(
-  () => sim.tab,
-  (tab) => {
-    if (tab === 'map') {
-      // The container had no size while hidden, so Leaflet needs telling.
-      window.setTimeout(() => map?.invalidateSize(), 0)
-    }
-  },
-)
 </script>
 
 <template>
   <div class="map">
     <div ref="host" class="map__canvas" />
     <button class="map__fit" type="button" @click="fitEveryone">Fit all</button>
+
+    <!--
+      The group thread lives here rather than behind a tab. Saying something to
+      everybody is the one message action that is not about a particular
+      person, so it belongs on the map next to all of them; anything you want
+      to say to one person is reached by tapping that person.
+    -->
+    <button class="map__shout" type="button" @click="sim.openThread(sim.GROUP_THREAD)">
+      Message everyone
+      <span v-if="sim.groupUnread > 0" class="map__shout-count">{{ sim.groupUnread }}</span>
+    </button>
   </div>
 </template>
 
@@ -292,7 +320,7 @@ watch(
 .map__fit {
   position: absolute;
   right: 12px;
-  bottom: 34px;
+  bottom: calc(80px + var(--safe-bottom));
   z-index: 500;
   min-height: var(--tap);
   padding: 0 16px;
@@ -300,6 +328,43 @@ watch(
   background: rgba(10, 13, 8, 0.9);
   border: 2px solid var(--line);
   font-weight: 700;
+}
+
+.map__shout {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + var(--safe-bottom));
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  border-radius: 14px;
+  background: rgba(10, 13, 8, 0.92);
+  border: 2px solid var(--line);
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.map__shout:active {
+  border-color: var(--fresh);
+}
+
+/* Unread on the group thread. Green rather than red: it is somebody talking,
+   not something wrong, and red is spoken for by the staleness ramp. */
+.map__shout-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: var(--fresh);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 24px;
 }
 </style>
 

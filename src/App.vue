@@ -3,10 +3,10 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { useSimStore } from '@/stores/sim'
 import StatusStrip from '@/components/StatusStrip.vue'
 import MapView from '@/components/MapView.vue'
-import MessagesView from '@/components/MessagesView.vue'
 import MateDetail from '@/components/MateDetail.vue'
+import MessageThread from '@/components/MessageThread.vue'
+import NamePrompt from '@/components/NamePrompt.vue'
 import DevPanel from '@/components/DevPanel.vue'
-import TabBar from '@/components/TabBar.vue'
 
 const sim = useSimStore()
 
@@ -22,21 +22,23 @@ onBeforeUnmount(() => {
 <template>
   <StatusStrip />
 
+  <!--
+    The map is the app. There is no tab bar any more: messages were a second
+    screen and are now two things reached from this one — a button for the
+    group, a mate's own dot for a word with just them — so nothing competes
+    with the map for the bottom of the screen.
+  -->
   <main class="stage">
-    <!--
-      The map stays mounted rather than being torn down on every tab change:
-      re-creating a Leaflet instance loses the pan and zoom the user set, and
-      losing someone's view because they glanced at the messages is exactly the
-      kind of small betrayal that makes an app feel untrustworthy.
-    -->
-    <MapView v-show="sim.tab === 'map'" />
-    <MessagesView v-if="sim.tab === 'messages'" />
+    <MapView />
   </main>
 
-  <TabBar />
-
   <MateDetail v-if="sim.selectedMate !== null" />
+  <MessageThread v-if="sim.openThreadId !== null" />
   <DevPanel v-if="sim.devPanelOpen" />
+
+  <!-- Last, and over everything: nothing behind this is usable until it is
+       answered, and the simulation should not be watched through it. -->
+  <NamePrompt v-if="sim.askingName" />
 </template>
 
 <style scoped>

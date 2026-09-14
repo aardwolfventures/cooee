@@ -190,9 +190,43 @@ describe('scenarios', () => {
     const moving = engine.mates.filter((m) => m.lastFix!.capturedAt > before.get(m.id)!)
 
     // Half the map carrying on as normal is what makes this hard to notice,
-    // and therefore what makes it worth testing.
-    expect(frozen.map((m) => m.id).sort()).toEqual(['ben', 'derrick', 'marshy'])
-    expect(moving.map((m) => m.id).sort()).toEqual(['dan', 'rod', 'sahil'])
+    // and therefore what makes it worth testing. Which half is not the point
+    // and is no longer fixed — whoever opens the app leaves the party, so the
+    // split is computed. The invariant is what the scenario promises.
+    expect(frozen.length + moving.length).toBe(engine.mates.length)
+    expect(frozen.length).toBeGreaterThan(0)
+    expect(moving.length).toBeGreaterThan(0)
+    expect(Math.abs(frozen.length - moving.length)).toBeLessThanOrEqual(1)
+
+    // And the ones still reporting are exactly the ones off the mesh.
+    for (const mate of moving) {
+      expect(mate.transport).toBe('cellular')
+    }
+    for (const mate of frozen) {
+      expect(mate.transport).toBe('mesh')
+    }
+  })
+
+  it('still splits the party in half when somebody has left it', () => {
+    const engine = new SimEngine()
+    engine.excludedMateId = 'rod'
+    engine.reset()
+    scenarioById('relay-dropped')!.apply(engine)
+    engine.settings.packetLossPct = 0
+    engine.settings.jitterEnabled = false
+    run(engine, 3 * 60)
+
+    const before = new Map(engine.mates.map((m) => [m.id, m.lastFix!.capturedAt]))
+    run(engine, 20 * 60)
+
+    const frozen = engine.mates.filter((m) => m.lastFix!.capturedAt === before.get(m.id))
+    const moving = engine.mates.filter((m) => m.lastFix!.capturedAt > before.get(m.id)!)
+
+    expect(engine.mates).toHaveLength(5)
+    expect(engine.mate('rod')).toBeUndefined()
+    expect(frozen.length).toBeGreaterThan(0)
+    expect(moving.length).toBeGreaterThan(0)
+    expect(Math.abs(frozen.length - moving.length)).toBeLessThanOrEqual(1)
   })
 
   it('converging boosts the reporting rate for the selected mate', () => {
@@ -207,6 +241,29 @@ describe('scenarios', () => {
     // the five-minute baseline would allow.
     expect(engine.youPosition).not.toEqual(startedAt)
     expect(engine.convergeTargetId).toBe('ben')
+  })
+
+  it('converges on somebody else when Ben is the one holding the phone', () => {
+    const engine = new SimEngine()
+    engine.excludedMateId = 'ben'
+    engine.reset()
+    scenarioById('converging')!.apply(engine)
+
+    // Not null, and not a mate who is not there. A "walk toward them" scenario
+    // with nobody to walk toward is not a scenario.
+    expect(engine.convergeTargetId).not.toBeNull()
+    expect(engine.convergeTargetId).not.toBe('ben')
+    expect(engine.mate(engine.convergeTargetId!)).toBeDefined()
+  })
+
+  it('always leaves somebody to go quiet, whoever has left the party', () => {
+    for (const excluded of [null, 'marshy', 'ben']) {
+      const engine = new SimEngine()
+      engine.excludedMateId = excluded
+      engine.reset()
+      scenarioById('quiet')!.apply(engine)
+      expect(engine.mates.filter((m) => m.activity === 'silent')).toHaveLength(1)
+    }
   })
 })
 

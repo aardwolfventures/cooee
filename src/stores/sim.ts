@@ -5,11 +5,13 @@ import { SCENARIOS, scenarioById, type ScenarioId } from '@/sim/scenarios'
 import { STALENESS_THRESHOLDS_MS, bucketFor, type StalenessBucket } from '@/lib/staleness'
 import { estimateWalk, type WalkEstimate } from '@/lib/walk'
 import { compassPoint } from '@/lib/geo'
+import { DEFAULT_YOU_NAME, YOU_ID } from '@/sim/mates'
+import { clearName, loadName, matchingMateId, normaliseName, saveName } from '@/sim/identity'
+import { GROUP_THREAD, type ThreadId } from '@/sim/types'
 import type { Mate, Message, StalenessTreatment, Transport } from '@/sim/types'
 
 export type ClockSpeed = 1 | 10 | 60 | 300
 export type RelayHealth = 'up' | 'suspect' | 'down'
-export type Tab = 'map' | 'messages'
 
 /** A mate as the UI is allowed to see them: only ever via a delivered fix. */
 export interface MateView {
@@ -60,7 +62,13 @@ export const useSimStore = defineStore('sim', () => {
   const speed = ref<ClockSpeed>(10)
   const activeScenarioId = ref<ScenarioId>('spread')
   const selectedMateId = ref<string | null>(null)
-  const tab = ref<Tab>('map')
+  /**
+   * Which conversation is open over the map, if any. There is no messages
+   * screen any more: the group thread is a button on the map and a private one
+   * is reached through the mate you want, so a thread is always something you
+   * opened on purpose and can drop straight back out of.
+   */
+  const openThreadId = ref<ThreadId | null>(null)
   const devPanelOpen = ref(false)
   /**
    * How strongly the Forestry sheet reads over the shaded relief. The build
@@ -70,6 +78,41 @@ export const useSimStore = defineStore('sim', () => {
    */
   const sheetOpacity = ref(0.85)
   const frame = shallowRef(0)
+
+  // --- Who is holding the phone -------------------------------------------
+
+  const storedName = loadName()
+  const youName = ref(storedName ?? DEFAULT_YOU_NAME)
+  /** Nothing is shown until this is answered — see `NamePrompt.vue`. */
+  const askingName = ref(storedName === null)
+
+  /**
+   * Take a name and, if it belongs to somebody in the party, take them out of
+   * it. Rebuilding the world is the honest way to do that: the party is
+   * constructed in `reset`, and a mate spliced out afterwards would leave
+   * their fixes in flight and their messages in the threads.
+   */
+  function setIdentity(raw: string): void {
+    const name = normaliseName(raw)
+    if (name.length === 0) {
+      return
+    }
+    youName.value = name
+    saveName(name)
+    askingName.value = false
+    engine.excludedMateId = matchingMateId(name)
+    engine.reset()
+    readAt.clear()
+    openThreadId.value = null
+    selectedMateId.value = null
+    applyScenario(activeScenarioId.value)
+  }
+
+  /** Ask again. Reached from the dev panel, for handing one phone around. */
+  function forgetIdentity(): void {
+    clearName()
+    askingName.value = true
+  }
 
   // --- Clock ---------------------------------------------------------------
 
@@ -88,6 +131,12 @@ export const useSimStore = defineStore('sim', () => {
       return
     }
     engine.tick(dtReal * speed.value)
+    // An open thread is being looked at, so nothing in it is unread. Doing
+    // this centrally means no view can forget to and leave a stale badge.
+    const open = openThreadId.value
+    if (open !== null) {
+      markRead(open)
+    }
     frame.value += 1
   }
 
@@ -166,13 +215,23 @@ export const useSimStore = defineStore('sim', () => {
   })
 
   /**
-   * The latest thing each person said, while it is still recent enough to sit
-   * over their dot. Keyed by author, so six mates give at most six bubbles.
+   * The latest thing each person said **to everyone**, while it is still
+   * recent enough to sit over their dot. Keyed by author, so six mates give at
+   * most six bubbles.
+   *
+   * Private messages deliberately do not appear here. A bubble is a public
+   * thing — it hangs over a dot in plain view — and a thread someone opened
+   * with you alone should not be readable at a glance by whoever is looking
+   * over your shoulder. They announce themselves with a count on the dot
+   * instead, and whether that is enough of a cue is the thing being tested.
    */
   const bubbleByAuthor = computed<Map<string, Message>>(() => {
     void frame.value
     const out = new Map<string, Message>()
     for (const message of engine.messages) {
+      if (message.threadId !== GROUP_THREAD) {
+        continue
+      }
       if (engine.now - message.sentAt > MESSAGE_BUBBLE_MS) {
         continue
       }
@@ -180,6 +239,77 @@ export const useSimStore = defineStore('sim', () => {
       out.set(message.authorId, message)
     }
     return out
+  })
+
+  // --- Threads -------------------------------------------------------------
+
+  /**
+   * When each thread was last looked at, on the simulation clock.
+   *
+   * Unread is counted against *arrival*, not against when it was said. A
+   * message captured before you last read the thread but delivered after it is
+   * new to you, and treating it as already seen would hide exactly the late
+   * arrival this whole prototype is about.
+   */
+  const readAt = reactive(new Map<ThreadId, number>())
+
+  function messagesFor(threadId: ThreadId): Message[] {
+    void frame.value
+    return engine.messages.filter(
+      (m) => m.threadId === threadId && (m.authorId === YOU_ID || m.state === 'delivered'),
+    )
+  }
+
+  function unreadFor(threadId: ThreadId): number {
+    void frame.value
+    const seenAt = readAt.get(threadId) ?? -1
+    return engine.messages.filter(
+      (m) =>
+        m.threadId === threadId &&
+        m.authorId !== YOU_ID &&
+        m.state === 'delivered' &&
+        (m.deliveredAt ?? m.sentAt) > seenAt,
+    ).length
+  }
+
+  function markRead(threadId: ThreadId): void {
+    readAt.set(threadId, engine.now)
+  }
+
+  function openThread(threadId: ThreadId): void {
+    openThreadId.value = threadId
+    markRead(threadId)
+  }
+
+  function closeThread(): void {
+    openThreadId.value = null
+  }
+
+  const groupUnread = computed(() => unreadFor(GROUP_THREAD))
+
+  /** Private unread per mate, for the count that rides on their dot. */
+  const unreadByMate = computed<Map<string, number>>(() => {
+    void frame.value
+    const out = new Map<string, number>()
+    for (const mate of engine.mates) {
+      const count = unreadFor(mate.id)
+      if (count > 0) {
+        out.set(mate.id, count)
+      }
+    }
+    return out
+  })
+
+  /** The name at the top of whichever thread is open. */
+  const openThreadTitle = computed(() => {
+    const id = openThreadId.value
+    if (id === null) {
+      return ''
+    }
+    if (id === GROUP_THREAD) {
+      return 'Everyone'
+    }
+    return engine.mate(id)?.name ?? id
   })
 
   const selectedMate = computed<MateView | null>(() => {
@@ -253,8 +383,24 @@ export const useSimStore = defineStore('sim', () => {
     selectedMateId.value = id
   }
 
-  function send(text: string): void {
-    engine.send(text)
+  function send(text: string, threadId: ThreadId = GROUP_THREAD): void {
+    engine.send(text, threadId)
+  }
+
+  /** The name to put on a message, whoever wrote it. */
+  function nameFor(authorId: string): string {
+    if (authorId === YOU_ID) {
+      return youName.value
+    }
+    return engine.mate(authorId)?.name ?? authorId
+  }
+
+  // A stored name has to take its mate out of the party before the first
+  // scenario is laid down, or a returning Ben opens the app to himself already
+  // on the ridge.
+  if (storedName !== null) {
+    engine.excludedMateId = matchingMateId(storedName)
+    engine.reset()
   }
 
   applyScenario('spread')
@@ -264,7 +410,6 @@ export const useSimStore = defineStore('sim', () => {
     frame,
     playing,
     speed,
-    tab,
     devPanelOpen,
     sheetOpacity,
     activeScenarioId,
@@ -288,5 +433,19 @@ export const useSimStore = defineStore('sim', () => {
     setTransportOverride,
     selectMate,
     send,
+    youName,
+    askingName,
+    setIdentity,
+    forgetIdentity,
+    nameFor,
+    openThreadId,
+    openThreadTitle,
+    openThread,
+    closeThread,
+    messagesFor,
+    unreadFor,
+    groupUnread,
+    unreadByMate,
+    GROUP_THREAD,
   }
 })

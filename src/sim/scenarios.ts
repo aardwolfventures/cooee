@@ -6,6 +6,40 @@
  * mostly to give testers something to compare them against.
  */
 import type { SimEngine } from './engine'
+import type { Mate } from './types'
+
+/**
+ * Pick the mate who plays a named role.
+ *
+ * These used to be hardcoded — Marshy goes quiet, you converge on Ben — but
+ * whoever opens the app leaves the party, so the preferred mate may not be
+ * there to play it. Falls through a preference order and then takes whoever is
+ * left, because a "gone quiet" run in which nobody goes quiet is not a run.
+ */
+function role(engine: SimEngine, preferred: string[]): Mate | undefined {
+  for (const id of preferred) {
+    const mate = engine.mate(id)
+    if (mate !== undefined) {
+      return mate
+    }
+  }
+  return engine.mates[0]
+}
+
+/**
+ * Split the party in two for the relay scenario: alternate mates keep a bar of
+ * signal and the rest are mesh-only. Computed rather than named, so the half
+ * that freezes stays a half whoever is holding the phone.
+ */
+function halfOnCellular(engine: SimEngine): Record<string, 'cellular'> {
+  const overrides: Record<string, 'cellular'> = {}
+  engine.mates.forEach((mate, index) => {
+    if (index % 2 === 1) {
+      overrides[mate.id] = 'cellular'
+    }
+  })
+  return overrides
+}
 
 export type ScenarioId = 'together' | 'spread' | 'quiet' | 'relay-dropped' | 'converging'
 
@@ -43,8 +77,9 @@ export const SCENARIOS: Scenario[] = [
         sahil: 0.06,
         dan: 0.05,
       }
+      const still = role(engine, ['rod', 'marshy'])
       for (const mate of engine.mates) {
-        mate.activity = mate.id === 'rod' ? 'stationary' : 'moving'
+        mate.activity = mate.id === still?.id ? 'stationary' : 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.05)
         engine.seedLastFix(mate.id, 15_000)
       }
@@ -74,8 +109,9 @@ export const SCENARIOS: Scenario[] = [
         sahil: 0.7,
         dan: 0.66,
       }
+      const still = role(engine, ['rod', 'marshy'])
       for (const mate of engine.mates) {
-        mate.activity = mate.id === 'rod' ? 'stationary' : 'moving'
+        mate.activity = mate.id === still?.id ? 'stationary' : 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.7)
         engine.seedLastFix(mate.id, 120_000 + Math.random() * 180_000)
       }
@@ -110,12 +146,13 @@ export const SCENARIOS: Scenario[] = [
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
         engine.seedLastFix(mate.id, 60_000 + Math.random() * 120_000)
       }
-      // Marshy stopped reporting 25 minutes ago and keeps walking regardless,
-      // so the gap between the dot and the truth widens as the run goes on.
-      const marshy = engine.mate('marshy')
-      if (marshy !== undefined) {
-        engine.seedLastFix('marshy', 25 * 60_000)
-        marshy.activity = 'silent'
+      // One of them stopped reporting 25 minutes ago and keeps walking
+      // regardless, so the gap between the dot and the truth widens as the run
+      // goes on.
+      const gone = role(engine, ['marshy', 'ben', 'derrick'])
+      if (gone !== undefined) {
+        engine.seedLastFix(gone.id, 25 * 60_000)
+        gone.activity = 'silent'
       }
     },
   },
@@ -138,11 +175,7 @@ export const SCENARIOS: Scenario[] = [
       // perfectly normally while the other three freeze. A map where
       // everything stops is obvious. A map where half of it stops is the one
       // people miss.
-      engine.settings.transportOverrides = {
-        rod: 'cellular',
-        sahil: 'cellular',
-        dan: 'cellular',
-      }
+      engine.settings.transportOverrides = halfOnCellular(engine)
       engine.youTransport = 'cellular'
       engine.convergeTargetId = null
       const fractions: Record<string, number> = {
@@ -167,7 +200,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'converging',
     name: 'Converging',
-    blurb: 'You walk toward Ben. Both ends boost their reporting rate.',
+    blurb: 'You walk toward a mate. Both ends boost their reporting rate.',
     watchFor: 'Do they use the map, or immediately want an arrow?',
     apply: (engine) => {
       engine.clearInFlight()
@@ -192,7 +225,7 @@ export const SCENARIOS: Scenario[] = [
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
         engine.seedLastFix(mate.id, 40_000 + Math.random() * 60_000)
       }
-      engine.convergeTargetId = 'ben'
+      engine.convergeTargetId = role(engine, ['ben', 'marshy', 'rod'])?.id ?? null
     },
   },
 ]

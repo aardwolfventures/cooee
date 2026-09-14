@@ -44,6 +44,18 @@ const supersededTotal = computed(() =>
       </header>
 
       <section class="dev__section">
+        <h3 class="dev__label">You</h3>
+        <div class="dev__row">
+          <span class="dev__you">{{ sim.youName }}</span>
+          <button class="dev__chip" type="button" @click="sim.forgetIdentity()">Someone else</button>
+        </div>
+        <p class="dev__note">
+          Who the phone thinks it belongs to. Changing it restarts the run — and if the new
+          name is one of the party, they come off the map.
+        </p>
+      </section>
+
+      <section class="dev__section">
         <h3 class="dev__label">Clock</h3>
         <div class="dev__row">
           <button class="chip chip--wide" type="button" @click="sim.togglePlay()">
@@ -304,6 +316,22 @@ const supersededTotal = computed(() =>
   margin: 8px 0 0;
   font-size: 13px;
   color: var(--text-dim);
+}
+
+.dev__you {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.dev__chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--surface-high);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 700;
 }
 
 .dev__slider {

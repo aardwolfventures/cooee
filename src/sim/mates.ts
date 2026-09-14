@@ -47,8 +47,15 @@ export interface MateSeed {
 }
 
 export const YOU_ID = 'you'
-export const YOU_NAME = 'Mike'
-export const YOU_FULL_NAME = 'Mike Hill'
+
+/**
+ * The name on your own dot until somebody says otherwise.
+ *
+ * Whoever opens the URL is asked who they are on first load, because the way
+ * this gets tested is by sending one link to the whole party — see
+ * `identity.ts`. This is only the fallback.
+ */
+export const DEFAULT_YOU_NAME = 'Mike'
 
 /** Camp, and where your own position starts. */
 export const CAMP: LatLon = fromLocalKm({ east: 0, north: 0 })
