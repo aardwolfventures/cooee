@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useSimStore } from '@/stores/sim'
 import { formatClock } from '@/lib/format'
-import { YOU_ID } from '@/sim/mates'
+import { YOU_ID, YOU_NAME } from '@/sim/mates'
 
 const sim = useSimStore()
 
@@ -30,7 +30,7 @@ const visible = computed(() =>
 
 function nameFor(authorId: string): string {
   if (authorId === YOU_ID) {
-    return 'You'
+    return YOU_NAME
   }
   return sim.engine.mate(authorId)?.name ?? authorId
 }

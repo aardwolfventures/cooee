@@ -1,9 +1,9 @@
 /**
- * The party.
+ * The party: Mike behind the phone, with Ben, Marshy and Rod out in front.
  *
- * Swap these names for the real ones before testing. The brief is explicit
- * that simulated mates carry real names from the group — a dot labelled
- * "Mate 2" is not the same test as a dot labelled with someone you know.
+ * Real names, deliberately. A dot labelled "Mate 2" is not the same test as a
+ * dot labelled with someone you know, because the thing being measured is
+ * whether people trust a stale position — and trust attaches to a person.
  *
  * Tracks are authored in kilometres east/north of ORIGIN (the Wonnangatta
  * Station flat) and converted to lat/lon, because reasoning about a walking
@@ -31,15 +31,15 @@ export interface MateSeed {
 }
 
 export const YOU_ID = 'you'
-export const YOU_NAME = 'You'
+export const YOU_NAME = 'Mike'
 
 /** Camp, and where your own position starts. */
 export const CAMP: LatLon = fromLocalKm({ east: 0, north: 0 })
 
 export const MATE_SEEDS: MateSeed[] = [
   {
-    id: 'macca',
-    name: 'Macca',
+    id: 'ben',
+    name: 'Ben',
     colour: '#7ab8ff',
     // Up the river west, then climbing the spur onto the northern tops.
     route: [
@@ -55,8 +55,8 @@ export const MATE_SEEDS: MateSeed[] = [
     batteryPct: 82,
   },
   {
-    id: 'dave',
-    name: 'Dave',
+    id: 'marshy',
+    name: 'Marshy',
     colour: '#c58cff',
     // South-east, climbing hard onto the high ridge and sidling along it.
     route: [
@@ -72,25 +72,8 @@ export const MATE_SEEDS: MateSeed[] = [
     batteryPct: 64,
   },
   {
-    id: 'jules',
-    name: 'Jules',
-    colour: '#4dd0e1',
-    // North-east through the timber, working the heads of the gullies.
-    route: [
-      { east: 0.3, north: 0.5 },
-      { east: 1.1, north: 1.6 },
-      { east: 1.6, north: 2.8 },
-      { east: 2.6, north: 3.5 },
-      { east: 3.8, north: 3.9 },
-      { east: 4.9, north: 4.4 },
-    ],
-    startFraction: 0.2,
-    activity: 'moving',
-    batteryPct: 91,
-  },
-  {
-    id: 'tommo',
-    name: 'Tommo',
+    id: 'rod',
+    name: 'Rod',
     colour: '#ff8fb1',
     // Stays low, east along the river flats, glassing the far faces.
     route: [

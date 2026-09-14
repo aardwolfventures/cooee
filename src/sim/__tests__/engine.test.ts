@@ -109,15 +109,15 @@ describe('relay failure', () => {
     perfectLink(engine)
     engine.settings.reportIntervalSec = 60
     engine.settings.defaultTransport = 'mesh'
-    engine.settings.transportOverrides = { dave: 'cellular' }
+    engine.settings.transportOverrides = { marshy: 'cellular' }
     run(engine, 10 * 60)
 
     const before = new Map(engine.mates.map((m) => [m.id, m.lastFix?.capturedAt ?? -1]))
     engine.settings.relayUp = false
     run(engine, 20 * 60)
 
-    expect(engine.mate('macca')!.lastFix!.capturedAt).toBe(before.get('macca'))
-    expect(engine.mate('dave')!.lastFix!.capturedAt).toBeGreaterThan(before.get('dave')!)
+    expect(engine.mate('ben')!.lastFix!.capturedAt).toBe(before.get('ben'))
+    expect(engine.mate('marshy')!.lastFix!.capturedAt).toBeGreaterThan(before.get('marshy')!)
   })
 
   it('lets the app infer the relay is down from missing heartbeats alone', () => {
@@ -138,19 +138,19 @@ describe('scenarios', () => {
   it('gone quiet leaves one mate ageing while the others keep reporting', () => {
     const engine = new SimEngine()
     scenarioById('quiet')!.apply(engine)
-    const startAge = engine.now - engine.mate('jules')!.lastFix!.capturedAt
+    const startAge = engine.now - engine.mate('marshy')!.lastFix!.capturedAt
     expect(startAge).toBeGreaterThanOrEqual(25 * 60_000)
 
     run(engine, 15 * 60)
-    const julesAge = engine.now - engine.mate('jules')!.lastFix!.capturedAt
-    expect(julesAge).toBeGreaterThan(startAge)
+    const marshyAge = engine.now - engine.mate('marshy')!.lastFix!.capturedAt
+    expect(marshyAge).toBeGreaterThan(startAge)
 
     // The silent mate keeps walking, so the gap between the last known dot and
     // where they actually are widens the whole time.
     // The dot is frozen but Jules is not: after fifteen minutes the stale
     // marker is several hundred metres from where they actually are.
-    const jules = engine.mate('jules')!
-    const drift = metresBetween(jules.truePosition, jules.lastFix!.position)
+    const marshy = engine.mate('marshy')!
+    const drift = metresBetween(marshy.truePosition, marshy.lastFix!.position)
     expect(drift).toBeGreaterThan(300)
   })
 
@@ -173,7 +173,7 @@ describe('scenarios', () => {
     // You closed some of the distance, and Dave reported far more often than
     // the five-minute baseline would allow.
     expect(engine.youPosition).not.toEqual(startedAt)
-    expect(engine.convergeTargetId).toBe('dave')
+    expect(engine.convergeTargetId).toBe('ben')
   })
 })
 

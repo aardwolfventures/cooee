@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { useSimStore } from '@/stores/sim'
-import { RELAY } from '@/sim/mates'
+import { RELAY, YOU_NAME } from '@/sim/mates'
 import { ageShort, fadeOpacity, haloDiameterPx } from '@/lib/staleness'
 import type { MateView } from '@/stores/sim'
 
@@ -64,7 +64,7 @@ function relayMarkerHtml(): string {
 }
 
 function youMarkerHtml(): string {
-  return '<div class="mate-marker"><span class="you-marker__dot"></span></div>'
+  return `<div class="mate-marker"><span class="you-marker__dot"></span><span class="mate-marker__label">${escapeHtml(YOU_NAME)}</span></div>`
 }
 
 function icon(html: string): L.DivIcon {

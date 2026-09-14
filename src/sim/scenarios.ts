@@ -35,14 +35,9 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.transportOverrides = {}
       engine.youTransport = 'cellular'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = {
-        macca: 0.06,
-        dave: 0.05,
-        jules: 0.07,
-        tommo: 0.05,
-      }
+      const fractions: Record<string, number> = { ben: 0.06, marshy: 0.05, rod: 0.05 }
       for (const mate of engine.mates) {
-        mate.activity = mate.id === 'tommo' ? 'stationary' : 'moving'
+        mate.activity = mate.id === 'rod' ? 'stationary' : 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.05)
         engine.seedLastFix(mate.id, 15_000)
       }
@@ -64,14 +59,9 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.transportOverrides = {}
       engine.youTransport = 'mesh'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = {
-        macca: 0.72,
-        dave: 0.68,
-        jules: 0.8,
-        tommo: 0.62,
-      }
+      const fractions: Record<string, number> = { ben: 0.72, marshy: 0.68, rod: 0.62 }
       for (const mate of engine.mates) {
-        mate.activity = mate.id === 'tommo' ? 'stationary' : 'moving'
+        mate.activity = mate.id === 'rod' ? 'stationary' : 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.7)
         engine.seedLastFix(mate.id, 120_000 + Math.random() * 180_000)
       }
@@ -93,23 +83,18 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.transportOverrides = {}
       engine.youTransport = 'mesh'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = {
-        macca: 0.6,
-        dave: 0.55,
-        jules: 0.7,
-        tommo: 0.5,
-      }
+      const fractions: Record<string, number> = { ben: 0.6, marshy: 0.55, rod: 0.5 }
       for (const mate of engine.mates) {
         mate.activity = 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
         engine.seedLastFix(mate.id, 60_000 + Math.random() * 120_000)
       }
-      // Jules stopped reporting 25 minutes ago and keeps walking regardless,
+      // Marshy stopped reporting 25 minutes ago and keeps walking regardless,
       // so the gap between the dot and the truth widens as the run goes on.
-      const jules = engine.mate('jules')
-      if (jules !== undefined) {
-        engine.seedLastFix('jules', 25 * 60_000)
-        jules.activity = 'silent'
+      const marshy = engine.mate('marshy')
+      if (marshy !== undefined) {
+        engine.seedLastFix('marshy', 25 * 60_000)
+        marshy.activity = 'silent'
       }
     },
   },
@@ -127,17 +112,12 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.outOfOrderEnabled = true
       engine.settings.relayUp = true
       engine.settings.defaultTransport = 'mesh'
-      // Dave and Tommo are low enough to hold a bar of signal; Macca and
-      // Jules are mesh-only and will freeze the moment the relay goes.
-      engine.settings.transportOverrides = { dave: 'cellular', tommo: 'cellular' }
+      // Rod is low enough on the flats to hold a bar of signal. Ben and Marshy
+      // are mesh-only and will both freeze the moment the relay goes.
+      engine.settings.transportOverrides = { rod: 'cellular' }
       engine.youTransport = 'cellular'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = {
-        macca: 0.65,
-        dave: 0.6,
-        jules: 0.75,
-        tommo: 0.55,
-      }
+      const fractions: Record<string, number> = { ben: 0.65, marshy: 0.6, rod: 0.55 }
       for (const mate of engine.mates) {
         mate.activity = 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
@@ -152,7 +132,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'converging',
     name: 'Converging',
-    blurb: 'You walk toward Dave. Both ends boost their reporting rate.',
+    blurb: 'You walk toward Ben. Both ends boost their reporting rate.',
     watchFor: 'Do they use the map, or immediately want an arrow?',
     apply: (engine) => {
       engine.clearInFlight()
@@ -164,18 +144,13 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.defaultTransport = 'mesh'
       engine.settings.transportOverrides = {}
       engine.youTransport = 'mesh'
-      const fractions: Record<string, number> = {
-        macca: 0.7,
-        dave: 0.45,
-        jules: 0.78,
-        tommo: 0.6,
-      }
+      const fractions: Record<string, number> = { ben: 0.45, marshy: 0.7, rod: 0.6 }
       for (const mate of engine.mates) {
-        mate.activity = mate.id === 'dave' ? 'moving' : 'moving'
+        mate.activity = 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
         engine.seedLastFix(mate.id, 40_000 + Math.random() * 60_000)
       }
-      engine.convergeTargetId = 'dave'
+      engine.convergeTargetId = 'ben'
     },
   },
 ]

@@ -83,8 +83,8 @@ two minutes at a kitchen table.
 | Together | The easy case. A baseline for how good it can ever look. |
 | Spread out | 3–6 km apart, mesh only, five-minute intervals. |
 | **Gone quiet** | A mate's fix is 25 minutes old and ageing — and they are still walking. |
-| **Relay dropped** | The relay falls over two minutes in and the mesh fragments. |
-| Converging | You walk toward Dave; both ends boost their reporting rate. |
+| **Relay dropped** | The relay falls over two minutes in; Rod holds cellular, Ben and Marshy freeze. |
+| Converging | You walk toward Ben; both ends boost their reporting rate. |
 
 The two in bold are the failure modes, and how the UI handles them is the
 actual design problem.
@@ -113,9 +113,11 @@ staleness ramp, so a mate's own colour cannot be mistaken for an age cue.
   not the mountain.
 - **Routes** are hand-authored polylines. A random walk would have looked wrong
   immediately — people follow spurs, rivers and saddles.
-- **Mate names** are placeholders in `src/sim/mates.ts`. **Swap them for the
-  real names before testing.** A dot labelled "Mate 2" is not the same test as
-  a dot labelled with someone you know.
+- **The party** is Mike behind the phone with Ben, Marshy and Rod out in front,
+  defined in `src/sim/mates.ts`. Real names, deliberately: a dot labelled
+  "Mate 2" is not the same test as a dot labelled with someone you know,
+  because the thing being measured is whether people trust a stale position,
+  and trust attaches to a person.
 
 ## What it deliberately does not do
 
