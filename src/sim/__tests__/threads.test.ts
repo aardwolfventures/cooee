@@ -143,6 +143,23 @@ describe('unread', () => {
     expect(sim.unreadFor(mateId!)).toBe(0)
   })
 
+  it('clears a mate\'s unread by opening their sheet, where the thread now lives', () => {
+    // Tapping a dot opens the conversation, not a stats screen. That counts as
+    // reading it — leaving a badge on a dot whose thread is on screen would be
+    // the app lying to you about something it can plainly see.
+    for (let i = 0; i < 200 && sim.unreadByMate.size === 0; i += 1) {
+      sim.engine.tick(60_000)
+      sim.frame += 1
+    }
+    const [mateId] = [...sim.unreadByMate.entries()][0] ?? []
+    expect(mateId).toBeDefined()
+
+    sim.selectMate(mateId!)
+    sim.frame += 1
+    expect(sim.unreadFor(mateId!)).toBe(0)
+    expect(sim.readingThreadId).toBe(mateId)
+  })
+
   it('counts a late arrival as unread even though it was said before you looked', () => {
     // A message captured before you last read the thread but delivered after
     // it is new to you. Counting against send time would hide exactly the late

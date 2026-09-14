@@ -84,6 +84,18 @@ Observed:
 
 ### 6. Does the terrain profile and walk time change what they decide to do, or is it decoration?
 
+**The shape of this question changed.** A mate's sheet used to open on the
+numbers, so everyone saw the profile whether they wanted it or not — which
+could only ever tell you whether people *used* something already in front of
+them. It now opens on the conversation, with the readings on one dim line and
+the profile behind a tap on it.
+
+That is a stronger test of the same thing. Decoration does not get sought out.
+
+Did anyone expand the line at all, and how long into the session:
+
+When they did, was it before deciding something or after:
+
 Observed:
 
 ### 7. When the relay drops in scenario 4, how long before anyone notices?

@@ -34,11 +34,13 @@ reached from them:
 
 - **Map** — mates as dots over the real Vulcan sheet, your position, the relay.
   This is the app; there is no tab bar.
-- **Mate detail** — tap a dot. Distance, bearing, elevation, age of the fix in
-  words, terrain cross-section, slope-adjusted walk time.
+- **Mate sheet** — tap a dot and you land on your conversation with that
+  person. Their name, the age of their fix, and one dim line of readings sit
+  above it; distance, bearing, elevation, the terrain cross-section and the
+  slope-adjusted walk time are behind a tap on that line.
 - **Threads** — **Message everyone** at the bottom of the map opens the group
-  thread; **Message <name>** on a mate's detail sheet opens a private one with
-  just them. Six presets either way, and per-message delivery state.
+  thread; a mate's own dot opens a private one with just them. Six presets
+  either way, and per-message delivery state.
 - **Status strip** — always on screen. Reachable count, relay health, and how
   long since anything was heard at all. A safety element, not a settings one:
   it answers "should I trust what I am looking at".
@@ -57,6 +59,14 @@ something false on the first screen he ever sees. The scenarios pick their
 roles accordingly, so "gone quiet" always has somebody to go quiet.
 
 ### Group and private
+
+Tapping someone on a map is nearly always the start of saying something to
+them, so their sheet is the conversation, not a page of numbers with a
+**Message** button at the bottom. The readings are still there — they have just
+stopped being the headline. The one exception is the age of the fix, which
+keeps its size and its staleness colour: it is not a statistic in the same
+sense as the others, it is the number that says whether any of the rest can be
+trusted.
 
 Two threads, and they do not carry the same promise.
 
