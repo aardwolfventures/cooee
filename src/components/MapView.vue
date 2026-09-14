@@ -31,7 +31,7 @@ function mateMarkerHtml(view: MateView): string {
   const { mate, ageMs, bucket } = view
   const treatment = sim.engine.settings.stalenessTreatment
   const age = ageMs ?? 0
-  const initial = escapeHtml(mate.name.slice(0, 1).toUpperCase())
+  const tag = escapeHtml(mate.tag)
   const name = escapeHtml(mate.name)
 
   const dotOpacity = treatment === 'fade' ? fadeOpacity(age) : 1
@@ -47,7 +47,7 @@ function mateMarkerHtml(view: MateView): string {
   return `
     <div class="mate-marker" style="opacity:${dotOpacity.toFixed(2)}">
       ${halo}
-      <span class="mate-marker__dot" style="background:${mate.colour}">${initial}</span>
+      <span class="mate-marker__dot${mate.tag.length > 1 ? ' mate-marker__dot--two' : ''}" style="background:${mate.colour}">${tag}</span>
       <span class="mate-marker__label">${name}${ageLabel}</span>
     </div>
   `
@@ -104,7 +104,14 @@ function render(): void {
 
   const relay = L.latLng(RELAY.position.lat, RELAY.position.lon)
   if (relayMarker === null) {
-    relayMarker = L.marker(relay, { icon: icon(relayMarkerHtml()), keyboard: false })
+    // Always on top. At six mates the labels get dense, and the relay is the
+    // one marker whose state answers "should I trust any of this" — a name
+    // badge must never be able to bury it.
+    relayMarker = L.marker(relay, {
+      icon: icon(relayMarkerHtml()),
+      keyboard: false,
+      zIndexOffset: 1000,
+    })
     relayMarker.addTo(map)
   } else {
     relayMarker.setIcon(icon(relayMarkerHtml()))

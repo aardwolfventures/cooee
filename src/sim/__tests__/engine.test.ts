@@ -162,6 +162,25 @@ describe('scenarios', () => {
     expect(engine.settings.relayUp).toBe(false)
   })
 
+  it('relay dropped freezes exactly half the party and leaves half moving', () => {
+    const engine = new SimEngine()
+    scenarioById('relay-dropped')!.apply(engine)
+    engine.settings.packetLossPct = 0
+    engine.settings.jitterEnabled = false
+    run(engine, 3 * 60)
+
+    const before = new Map(engine.mates.map((m) => [m.id, m.lastFix!.capturedAt]))
+    run(engine, 20 * 60)
+
+    const frozen = engine.mates.filter((m) => m.lastFix!.capturedAt === before.get(m.id))
+    const moving = engine.mates.filter((m) => m.lastFix!.capturedAt > before.get(m.id)!)
+
+    // Half the map carrying on as normal is what makes this hard to notice,
+    // and therefore what makes it worth testing.
+    expect(frozen.map((m) => m.id).sort()).toEqual(['ben', 'derrick', 'marshy'])
+    expect(moving.map((m) => m.id).sort()).toEqual(['dan', 'rod', 'sahil'])
+  })
+
   it('converging boosts the reporting rate for the selected mate', () => {
     const engine = new SimEngine()
     perfectLink(engine)

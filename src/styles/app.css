@@ -129,6 +129,11 @@ button {
   color: #12160f;
 }
 
+.mate-marker__dot--two {
+  font-size: 11px;
+  letter-spacing: -0.02em;
+}
+
 .mate-marker__label {
   position: absolute;
   left: 0;

@@ -35,7 +35,14 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.transportOverrides = {}
       engine.youTransport = 'cellular'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = { ben: 0.06, marshy: 0.05, rod: 0.05 }
+      const fractions: Record<string, number> = {
+        ben: 0.06,
+        marshy: 0.05,
+        rod: 0.05,
+        derrick: 0.07,
+        sahil: 0.06,
+        dan: 0.05,
+      }
       for (const mate of engine.mates) {
         mate.activity = mate.id === 'rod' ? 'stationary' : 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.05)
@@ -59,7 +66,14 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.transportOverrides = {}
       engine.youTransport = 'mesh'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = { ben: 0.72, marshy: 0.68, rod: 0.62 }
+      const fractions: Record<string, number> = {
+        ben: 0.72,
+        marshy: 0.68,
+        rod: 0.62,
+        derrick: 0.8,
+        sahil: 0.7,
+        dan: 0.66,
+      }
       for (const mate of engine.mates) {
         mate.activity = mate.id === 'rod' ? 'stationary' : 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.7)
@@ -83,7 +97,14 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.transportOverrides = {}
       engine.youTransport = 'mesh'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = { ben: 0.6, marshy: 0.55, rod: 0.5 }
+      const fractions: Record<string, number> = {
+        ben: 0.6,
+        marshy: 0.55,
+        rod: 0.5,
+        derrick: 0.7,
+        sahil: 0.58,
+        dan: 0.52,
+      }
       for (const mate of engine.mates) {
         mate.activity = 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
@@ -112,12 +133,26 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.outOfOrderEnabled = true
       engine.settings.relayUp = true
       engine.settings.defaultTransport = 'mesh'
-      // Rod is low enough on the flats to hold a bar of signal. Ben and Marshy
-      // are mesh-only and will both freeze the moment the relay goes.
-      engine.settings.transportOverrides = { rod: 'cellular' }
+      // Half the party is low enough to hold a bar of signal and half is not,
+      // which is the hard version of this test: three dots carry on moving
+      // perfectly normally while the other three freeze. A map where
+      // everything stops is obvious. A map where half of it stops is the one
+      // people miss.
+      engine.settings.transportOverrides = {
+        rod: 'cellular',
+        sahil: 'cellular',
+        dan: 'cellular',
+      }
       engine.youTransport = 'cellular'
       engine.convergeTargetId = null
-      const fractions: Record<string, number> = { ben: 0.65, marshy: 0.6, rod: 0.55 }
+      const fractions: Record<string, number> = {
+        ben: 0.65,
+        marshy: 0.6,
+        rod: 0.55,
+        derrick: 0.75,
+        sahil: 0.62,
+        dan: 0.58,
+      }
       for (const mate of engine.mates) {
         mate.activity = 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
@@ -144,7 +179,14 @@ export const SCENARIOS: Scenario[] = [
       engine.settings.defaultTransport = 'mesh'
       engine.settings.transportOverrides = {}
       engine.youTransport = 'mesh'
-      const fractions: Record<string, number> = { ben: 0.45, marshy: 0.7, rod: 0.6 }
+      const fractions: Record<string, number> = {
+        ben: 0.45,
+        marshy: 0.7,
+        rod: 0.6,
+        derrick: 0.78,
+        sahil: 0.68,
+        dan: 0.64,
+      }
       for (const mate of engine.mates) {
         mate.activity = 'moving'
         engine.placeAlongTrack(mate.id, fractions[mate.id] ?? 0.6)
