@@ -131,11 +131,12 @@ export const useSimStore = defineStore('sim', () => {
       return
     }
     engine.tick(dtReal * speed.value)
-    // An open thread is being looked at, so nothing in it is unread. Doing
-    // this centrally means no view can forget to and leave a stale badge.
-    const open = openThreadId.value
-    if (open !== null) {
-      markRead(open)
+    // Whatever thread is on screen is being looked at, so nothing in it is
+    // unread. Doing this centrally means no view can forget to and leave a
+    // stale badge sitting on a dot you are already reading.
+    const reading = readingThreadId.value
+    if (reading !== null) {
+      markRead(reading)
     }
     frame.value += 1
   }
@@ -281,6 +282,17 @@ export const useSimStore = defineStore('sim', () => {
     markRead(threadId)
   }
 
+  /**
+   * The thread currently on screen, whichever sheet is showing it.
+   *
+   * A mate's sheet is their private thread — the readings sit above it, but the
+   * body of it is the conversation — so opening one counts as reading it just
+   * as much as opening the group thread does.
+   */
+  const readingThreadId = computed<ThreadId | null>(
+    () => openThreadId.value ?? selectedMateId.value,
+  )
+
   function closeThread(): void {
     openThreadId.value = null
   }
@@ -298,18 +310,6 @@ export const useSimStore = defineStore('sim', () => {
       }
     }
     return out
-  })
-
-  /** The name at the top of whichever thread is open. */
-  const openThreadTitle = computed(() => {
-    const id = openThreadId.value
-    if (id === null) {
-      return ''
-    }
-    if (id === GROUP_THREAD) {
-      return 'Everyone'
-    }
-    return engine.mate(id)?.name ?? id
   })
 
   const selectedMate = computed<MateView | null>(() => {
@@ -381,6 +381,9 @@ export const useSimStore = defineStore('sim', () => {
 
   function selectMate(id: string | null): void {
     selectedMateId.value = id
+    if (id !== null) {
+      markRead(id)
+    }
   }
 
   function send(text: string, threadId: ThreadId = GROUP_THREAD): void {
@@ -439,7 +442,7 @@ export const useSimStore = defineStore('sim', () => {
     forgetIdentity,
     nameFor,
     openThreadId,
-    openThreadTitle,
+    readingThreadId,
     openThread,
     closeThread,
     messagesFor,
