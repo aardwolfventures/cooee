@@ -91,6 +91,12 @@ The default view and where the app lives.
 - Real topo tiles over a real location. Use somewhere you actually hunt so the terrain reads honestly. Anything free and offline-capable will do at this stage.
 - Nothing else. No waypoints, no tracks, no layers panel.
 
+**Amendment, Sept 2026 — the end version downloads an area before you go.** Maps were originally left as "anything offline-capable will do", with the real decision parked for after v1. That was the wrong shape. Preparing an area is not plumbing to be settled later, it is an interaction a person performs, at the truck, with attention on it — and therefore one they can fail to perform, in a way that only shows up later and in the worst place. It belongs in v1 as a question, even though the machinery behind it belongs well after.
+
+So v1 should simulate it: pick an area, see its size, watch it download, and be told when you have walked off the edge of it. None of that needs a real tile. What it answers is question 12 — do people remember to prepare — which has the same shape as question 7 and is just as dangerous if the answer is no.
+
+The layer model, the licensing that rules Google and Apple out of it, and the staged path are in `docs/maps.md`.
+
 **Staleness treatment is the primary design question on this screen.** A fix from fourteen minutes ago must not look like a fix from thirty seconds ago. Try at least three approaches and test them: numeric age labels, progressive fading, and an explicit ring or halo that grows with age. One of them will be obviously right and it is not obvious in advance which.
 
 ### Mate detail
@@ -163,4 +169,4 @@ The prototype becomes the brief. Specifically it produces:
 - A concrete answer on whether route planning earns its place
 - The real transport abstraction, because the simulation engine already models mesh and cellular as interchangeable sources
 
-At that point `mate-tracker-build-plan.md` picks up: stack decision, BLE, offline tiles, and hardware in the field.
+At that point `mate-tracker-build-plan.md` picks up: stack decision, BLE, offline tiles, and hardware in the field. The map decisions that could not wait are already in `docs/maps.md`.

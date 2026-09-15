@@ -1,0 +1,36 @@
+name: Checks
+
+# Deploying runs the tests too, but only once a change is already on main — so
+# a broken change is caught after it has been merged, and the symptom is the
+# site quietly not updating. This runs the same checks on the pull request,
+# where the answer is still useful.
+on:
+  pull_request:
+  workflow_dispatch:
+
+# Only the newest push to a branch matters; anything still running for an older
+# one is answering a question nobody is asking any more.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      # Deliberately the same command the deploy runs, typecheck included, so a
+      # green pull request means a green deploy rather than nearly one.
+      - run: pnpm build
