@@ -6,7 +6,7 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest'
 import { readFile } from 'node:fs/promises'
-import { demBounds, isDemLoaded, loadDem, sampleElevation } from '../dem'
+import { demBounds, isDemLoaded, isInsideDem, loadDem, sampleElevation } from '../dem'
 import { ORIGIN, elevationAt, profileBetween, fromLocalKm } from '../terrain'
 import { estimateWalk } from '@/lib/walk'
 
@@ -113,5 +113,30 @@ describe('derived terrain readings', () => {
     // 3 km of undulating forest is not a 25-minute flat-ground walk.
     expect(walk.seconds).toBeGreaterThan(1800)
     expect(walk.seconds).toBeLessThan(7200)
+  })
+})
+
+describe('coverage', () => {
+  it('knows what it covers and what it does not', () => {
+    const b = demBounds()
+    const midLat = (b.north + b.south) / 2
+    const midLon = (b.east + b.west) / 2
+    expect(isInsideDem({ lat: midLat, lon: midLon })).toBe(true)
+
+    // A degree out in each direction is well past the edge in every case.
+    expect(isInsideDem({ lat: b.north + 1, lon: midLon })).toBe(false)
+    expect(isInsideDem({ lat: b.south - 1, lon: midLon })).toBe(false)
+    expect(isInsideDem({ lat: midLat, lon: b.west - 1 })).toBe(false)
+    expect(isInsideDem({ lat: midLat, lon: b.east + 1 })).toBe(false)
+  })
+
+  it('still returns a number outside, which is why callers must ask first', () => {
+    // sampleElevation clamps rather than throwing, so it hands back a
+    // plausible figure for ground it has never seen. That is the trap
+    // isInsideDem exists to let callers avoid.
+    const b = demBounds()
+    const off = { lat: (b.north + b.south) / 2, lon: b.east + 2 }
+    expect(Number.isFinite(sampleElevation(off))).toBe(true)
+    expect(isInsideDem(off)).toBe(false)
   })
 })

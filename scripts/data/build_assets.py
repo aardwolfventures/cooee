@@ -5,6 +5,12 @@ See README.md in this directory for what this produces and why. Run from the
 repository root:
 
     python3 scripts/data/build_assets.py path/to/CH_VULCAN-70.PDF
+    python3 scripts/data/build_assets.py --dem -34.2,149.4,-33.5,150.1
+
+The second form builds only the elevation grid, over any box, with no PDF at
+all. The relief layer is the one thing the app can always draw, and the point of
+that form is to be able to put it over country you know well enough to judge it
+against — which you cannot do while the only grid there is covers one sheet.
 """
 import gzip
 import json
@@ -26,6 +32,9 @@ PALETTE = 128                      # line art and flat fills; 128 is lossless-lo
 TERRARIUM = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
 OUT_TERRAIN = 'public/terrain'
 OUT_MAP = 'public/map'
+# A box far bigger than a day's hunting is more likely a typo than an intent,
+# and it would be paid for in thousands of tile fetches before anyone noticed.
+MAX_DEM_TILES = 400
 
 
 def read_georeference(path):
@@ -164,7 +173,46 @@ def build_tiles(page, clip, frame):
     print(f'{total} tiles')
 
 
+def parse_box(text):
+    """S,W,N,E in degrees, to the (west, east, south, north) build_elevation wants."""
+    try:
+        south, west, north, east = [float(v) for v in text.split(',')]
+    except ValueError:
+        raise SystemExit('--dem wants four numbers: south,west,north,east')
+    if south >= north or west >= east:
+        raise SystemExit(f'box is inside out: south {south} north {north}, west {west} east {east}')
+    return west, east, south, north
+
+
+def check_size(bounds):
+    """Report the box in kilometres and refuse an implausibly large one."""
+    west, east, south, north = bounds
+    mid = math.radians((north + south) / 2)
+    km_ns = (north - south) * 111.132
+    km_ew = (east - west) * 111.320 * math.cos(mid)
+    x0, y0 = lonlat_to_tile(west, north, DEM_ZOOM)
+    x1, y1 = lonlat_to_tile(east, south, DEM_ZOOM)
+    tiles = (int(x1) - int(x0) + 1) * (int(y1) - int(y0) + 1)
+    print(f'box {km_ew:.0f} x {km_ns:.0f} km, {tiles} source tiles at z{DEM_ZOOM}')
+    if tiles > MAX_DEM_TILES:
+        raise SystemExit(f'{tiles} tiles is more than the {MAX_DEM_TILES} cap — narrow the box')
+
+
 if __name__ == '__main__':
+    if len(sys.argv) >= 3 and sys.argv[1] == '--dem':
+        dem_bounds = parse_box(sys.argv[2])
+        check_size(dem_bounds)
+        build_elevation(dem_bounds)
+        west, east, south, north = dem_bounds
+        # The party is positioned relative to ORIGIN, so a grid somewhere else
+        # is drawn somewhere the mates are not. Say so plainly rather than
+        # leaving someone to wonder why their new relief is off screen.
+        print('\nRelief will now draw over this box. To put the party on it too,')
+        print('set ORIGIN in src/sim/terrain.ts to somewhere inside it, e.g.')
+        print(f'  export const ORIGIN: LatLon = {{ lat: {(north + south) / 2:.5f}, '
+              f'lon: {(west + east) / 2:.5f} }}')
+        raise SystemExit(0)
+
     if len(sys.argv) < 2:
         raise SystemExit(__doc__)
     doc = pymupdf.open(sys.argv[1])
