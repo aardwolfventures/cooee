@@ -150,6 +150,37 @@ party if they were in it.
 
 Observed:
 
+### 12. Do people remember to prepare before they leave?
+
+**The brief changed to make this a question at all.** The end version downloads
+an area before you go hunting there — see `docs/maps.md` — which turns the
+offline constraint into something a person deliberately does, at the truck,
+while there is still reception.
+
+Which means it is something a person can deliberately not do.
+
+This has the same shape as question 7, and is just as dangerous. If nobody
+notices the relay drop, the status strip has failed. If nobody remembers to
+download, the map is absent in the gully. Both fail quietly, late, and in the
+worst possible place.
+
+It needs no real tiles to test: a region picker, a size in megabytes, a
+progress bar and an off-the-edge state can all be simulated, and simulating
+them answers whether the interaction works before any of the machinery is
+built.
+
+The half of it that exists already: panning past the elevation model says *"Off
+the mapped area. No terrain here, so no cross-sections or walk times either."*
+
+Did they prepare an area unprompted, or only when told to:
+
+When they walked off the edge, how long before they noticed, and what did they
+notice — the notice itself, or the map having gone quiet:
+
+Did the size in megabytes mean anything to them:
+
+Observed:
+
 ---
 
 ## Round 2 — date:
