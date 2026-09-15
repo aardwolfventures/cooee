@@ -166,6 +166,24 @@ export function sampleElevation(p: LatLon): number {
   return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
 }
 
+/**
+ * Is this point actually covered by the elevation model?
+ *
+ * Everything terrain-derived — the relief layer, cross-sections, slope-adjusted
+ * walk times — is only as real as the grid underneath it, and the grid covers
+ * one area. `sampleElevation` deliberately clamps outside it rather than
+ * throwing, which keeps the relief continuous but means a point off the edge
+ * gets a plausible number that describes the border, not the ground. Anything
+ * that would present such a number to a person should ask this first.
+ */
+export function isInsideDem(p: LatLon): boolean {
+  if (!isDemLoaded()) {
+    return false
+  }
+  const b = demBounds()
+  return p.lat <= b.north && p.lat >= b.south && p.lon >= b.west && p.lon <= b.east
+}
+
 /** Geographic extent of the loaded grid. */
 export function demBounds(): { north: number; south: number; east: number; west: number } {
   const { meta } = requireDem()

@@ -12,7 +12,7 @@
  */
 import L from 'leaflet'
 import { elevationAt } from '@/sim/terrain'
-import { ORIGIN } from '@/sim/terrain'
+import { demBounds, isDemLoaded } from '@/sim/dem'
 
 const TILE_PX = 256
 /** Elevation samples per tile edge. Upscaled to the tile, which shaded relief
@@ -20,12 +20,6 @@ const TILE_PX = 256
 const GRID = 128
 /** Matches the printed sheet, so the drawn lines and the sheet's own agree. */
 const CONTOUR_INTERVAL_M = 20
-
-/** Only draw where the elevation model actually has data. Outside the sheet
- *  every sample clamps to the edge, which would smear the border colour across
- *  the rest of the world. */
-const AOI_HALF_LAT = 0.26
-const AOI_HALF_LON = 0.24
 
 /** The sheet's real range: the Abercrombie gorge floor to the highest tops. */
 const ELEV_MIN = 490
@@ -72,17 +66,34 @@ function tileToLat(worldY: number, scale: number): number {
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))
 }
 
-function nearAoi(coords: L.Coords): boolean {
+/**
+ * Only draw where the elevation model actually has data.
+ *
+ * This used to be a box hardcoded around the Vulcan camp, which was correct
+ * only for as long as there was exactly one elevation model and it sat there.
+ * Reading the loaded grid's own extent means the relief follows the data: build
+ * a model for different country and the layer draws over that country instead,
+ * with nothing to keep in step by hand.
+ *
+ * The check matters because `sampleElevation` clamps outside the grid. Drawn
+ * anyway, the edge values would smear the border colour across the rest of the
+ * world — a shaded hillside stretching to the horizon, describing nothing.
+ */
+function hasData(coords: L.Coords): boolean {
+  if (!isDemLoaded()) {
+    return false
+  }
+  const bounds = demBounds()
   const scale = TILE_PX * 2 ** coords.z
   const west = tileToLon(coords.x * TILE_PX, scale)
   const east = tileToLon((coords.x + 1) * TILE_PX, scale)
   const north = tileToLat(coords.y * TILE_PX, scale)
   const south = tileToLat((coords.y + 1) * TILE_PX, scale)
   return (
-    east >= ORIGIN.lon - AOI_HALF_LON &&
-    west <= ORIGIN.lon + AOI_HALF_LON &&
-    north >= ORIGIN.lat - AOI_HALF_LAT &&
-    south <= ORIGIN.lat + AOI_HALF_LAT
+    east >= bounds.west &&
+    west <= bounds.east &&
+    north >= bounds.south &&
+    south <= bounds.north
   )
 }
 
@@ -92,7 +103,7 @@ const TerrainGridLayer = L.GridLayer.extend({
     tile.width = TILE_PX
     tile.height = TILE_PX
     const ctx = tile.getContext('2d')
-    if (ctx === null || !nearAoi(coords)) {
+    if (ctx === null || !hasData(coords)) {
       return tile
     }
 

@@ -4,12 +4,29 @@ import L from 'leaflet'
 import { useSimStore } from '@/stores/sim'
 import { RELAY, YOU_ID } from '@/sim/mates'
 import { createTerrainLayer } from '@/map/terrainLayer'
+import { isInsideDem } from '@/sim/dem'
 import { ageShort, fadeOpacity, haloDiameterPx } from '@/lib/staleness'
 import type { MateView } from '@/stores/sim'
 
 const sim = useSimStore()
 const host = ref<HTMLDivElement | null>(null)
 const sheetOpacity = computed(() => sim.sheetOpacity)
+
+/**
+ * True when you have panned off the edge of the elevation model.
+ *
+ * Off the edge the map goes quiet: no relief, and any cross-section or walk
+ * time would be computed from clamped border values rather than real ground.
+ * Going blank without saying so is the one failure this app should never
+ * commit — a map that stops working should say it has stopped, not simply
+ * stop. This is also a dry run of the state a downloaded-area model has to
+ * handle for real: you have walked out of what you brought with you.
+ *
+ * Judged on the view rather than your own position, because in the prototype
+ * you never walk that far — but panning there is exactly how someone finds
+ * the edge.
+ */
+const offTheEdge = ref(false)
 
 let map: L.Map | null = null
 let sheetLayer: L.TileLayer | null = null
@@ -263,8 +280,15 @@ onMounted(() => {
   })
   sheetLayer.addTo(map)
 
+  const checkEdge = (): void => {
+    const centre = map?.getCenter()
+    offTheEdge.value = centre !== undefined && !isInsideDem({ lat: centre.lat, lon: centre.lng })
+  }
+  map.on('move', checkEdge)
+
   render()
   fitEveryone()
+  checkEdge()
 
   refreshHandle = window.setInterval(render, 250)
 })
@@ -302,6 +326,11 @@ watch(
         <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
       </svg>
     </button>
+
+    <p v-if="offTheEdge" class="map__edge" role="status">
+      <strong>Off the mapped area.</strong>
+      No terrain here, so no cross-sections or walk times either.
+    </p>
 
     <!--
       The group thread lives here rather than behind a tab. Saying something to
@@ -355,6 +384,28 @@ watch(
 
 .map__fit:active svg {
   stroke: var(--fresh);
+}
+
+/* Sits at the top, under the status strip, where a warning belongs — not down
+   by the controls where it would read as another button. */
+.map__edge {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 500;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(10, 13, 8, 0.92);
+  border: 2px solid var(--stale);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.map__edge strong {
+  color: var(--stale);
 }
 
 .map__shout {

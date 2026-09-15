@@ -32,6 +32,29 @@ pip install pymupdf pillow numpy pyproj
 python3 scripts/data/build_assets.py path/to/CH_VULCAN-70.PDF
 ```
 
+### Elevation only, anywhere
+
+The elevation step needs no PDF — it fetches terrain tiles for a box. This
+builds the grid on its own, over country of your choosing:
+
+```sh
+python3 scripts/data/build_assets.py --dem south,west,north,east
+python3 scripts/data/build_assets.py --dem -34.2,149.4,-33.5,150.1
+```
+
+It prints the box in kilometres before fetching anything, and refuses a box
+needing more than 400 source tiles, on the grounds that one that large is more
+likely a typo than an intention.
+
+This exists to make the relief layer testable. It is the one thing the app can
+always draw, and the question of whether shaded relief and contours are enough
+on their own to walk to someone cannot be answered over country you only know
+through the sheet lying on top of it.
+
+The party is positioned relative to `ORIGIN` in `src/sim/terrain.ts`, so a grid
+built somewhere else draws relief where the mates are not. The command prints
+the `ORIGIN` line to paste if you want to move them onto it.
+
 ## How the sheet is warped
 
 The four `/GPTS` corners project to a rectangle in MGA zone 55 that closes to
